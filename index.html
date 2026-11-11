@@ -105,8 +105,11 @@ footer{display:none; font-size:12px; color:var(--muted); padding-bottom:6px}
 @media (min-width:900px){ footer{display:block} }
 body.clean header, body.clean #dock, body.clean footer{display:none}
 body.clean{padding-bottom:calc(8px + env(safe-area-inset-bottom))}
-#unclean{position:fixed; top:calc(10px + env(safe-area-inset-top)); right:calc(14px + env(safe-area-inset-right)); opacity:.45; display:none; min-height:44px}
-body.clean #unclean{display:block}
+#cleanBar{position:fixed; top:calc(10px + env(safe-area-inset-top)); right:calc(14px + env(safe-area-inset-right)); display:flex; gap:8px; z-index:5}
+#unclean, #cleanStart{display:none; min-height:44px; opacity:.45}
+body.clean #unclean, body.clean #cleanStart{display:block}
+#cleanStart.live{background:var(--bad); border-color:var(--bad); color:#fff; opacity:.7}
+body.clean #banner{margin-top:50px} /* keep tips and errors clear of the Start and Show controls buttons in the corner */
 dialog{
   border:1px solid var(--line); border-radius:16px; background:var(--panel); color:var(--ink);
   width:min(560px,calc(100% - 20px)); max-height:90vh; max-height:90dvh; overflow:auto; padding:18px 18px calc(18px + env(safe-area-inset-bottom));
@@ -145,6 +148,9 @@ label.chk[hidden]{display:none}
 body.standalone{padding-top:calc(30px + env(safe-area-inset-top))}
 @media (display-mode: standalone){ body{padding-top:calc(30px + env(safe-area-inset-top))} }
 .grid button.on{background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:700}
+.grid button.wide{grid-column:1 / -1}
+/* the sheet scrolls on short screens, so keep Close pinned at its bottom edge, always in reach */
+#closeMore{position:sticky; bottom:8px; z-index:1; box-shadow:0 0 0 8px var(--panel), 0 -18px 14px 2px var(--panel)}
 /* Upside down: the whole page turns 180 degrees so the phone can be held with its bottom edge (and bottom microphone) toward the speaker.
    The notch and home-indicator margins swap sides, and the sheets open at the edge nearest your thumb. */
 html.flip body{
@@ -155,7 +161,7 @@ html.flip #dock{padding-bottom:calc(8px + env(safe-area-inset-top))}
 html.flip body.standalone #dock{padding-bottom:calc(30px + env(safe-area-inset-top))}
 html.flip body.clean{padding-bottom:calc(8px + env(safe-area-inset-top))}
 html.flip body.standalone.clean{padding-bottom:calc(30px + env(safe-area-inset-top))}
-html.flip #unclean{top:calc(10px + env(safe-area-inset-bottom)); right:calc(14px + env(safe-area-inset-left))}
+html.flip #cleanBar{top:calc(10px + env(safe-area-inset-bottom)); right:calc(14px + env(safe-area-inset-left))}
 html.flip dialog{transform:rotate(180deg)}
 html.flip dialog.sheet{margin:calc(10px + env(safe-area-inset-top)) auto auto}
 @media (min-width:700px){ html.flip dialog.sheet{margin:auto} }
@@ -211,7 +217,10 @@ a{color:var(--accent)}
   <button id="moreBtn" aria-haspopup="dialog">More</button>
 </nav>
 
-<button id="unclean">Show controls</button>
+<div id="cleanBar">
+  <button id="cleanStart" aria-label="Start or stop">Start</button>
+  <button id="unclean">Show controls</button>
+</div>
 
 <dialog id="more" class="sheet" tabindex="-1">
   <h2>Controls</h2>
@@ -244,6 +253,7 @@ a{color:var(--accent)}
     <button id="saveBtn">Save transcript</button>
     <button id="settingsBtn">Settings</button>
     <button id="flipBtn" aria-pressed="false" title="Turns the screen upside down, so you can hold the phone with its bottom edge toward the speaker.">Upside down</button>
+    <button id="subsBtn" class="wide">Subtitles</button>
   </div>
   <p class="hint">While Live, microphone audio is sent over the internet to Soniox. Machine translation can be wrong; treat it as an aid, not an official translation.</p>
   <button id="closeMore" style="width:100%">Close</button>
@@ -325,7 +335,7 @@ var el = {
   banner: $('banner'), bannerText: $('bannerText'), bannerClose: $('bannerClose'),
   panes: $('panes'), paneUk: $('paneUk'), paneEn: $('paneEn'), en: $('enText'), uk: $('ukText'),
   modeTitle: $('modeTitle'), enLabel: $('enLabel'), ukLabel: $('ukLabel'), modeHint: $('modeHint'),
-  showEn: $('showEn'), swapBtn: $('swapBtn'), flip: $('flipBtn'), modeBtns: Array.prototype.slice.call(document.querySelectorAll('.seg button')),
+  showEn: $('showEn'), swapBtn: $('swapBtn'), flip: $('flipBtn'), subs: $('subsBtn'), cleanStart: $('cleanStart'), modeBtns: Array.prototype.slice.call(document.querySelectorAll('.seg button')),
   langA: $('langA'), langB: $('langB'), showEnText: $('showEnText'), showUkText: $('showUkText'),
   rememberRow: $('rememberRow'), remember: $('rememberKey'), forget: $('forgetKey'), keyHint: $('keyHint'),
   unclean: $('unclean'), dlg: $('settings'), key: $('keyInput'), showKey: $('showKey'),
@@ -414,6 +424,8 @@ function hideBanner(){ el.banner.hidden = true; delete el.banner.dataset.tip; }
 function ui(){
   el.start.textContent = S.demo ? 'Stop demo' : ((S.running) ? 'Stop' : 'Start');
   el.start.classList.toggle('danger', S.running);
+  el.cleanStart.textContent = el.start.textContent; // the same Start or Stop, kept reachable inside Clean view
+  el.cleanStart.classList.toggle('live', S.running || S.demo);
   el.demo.textContent = S.demo ? 'Stop demo' : 'Demo';
   el.demo.disabled = S.running && !S.demo;
   el.modeBtns.forEach(function(b){ b.disabled = S.running; });
@@ -731,9 +743,11 @@ async function start(){
   }
   S.running = true; S.stopping = false; S.fatal = false; S.demo = false; S.noAudio = false;
   S.queue = []; S.reconnects = 0; S.everOpened = false; S.triedLegacy = false;
+  var run = S.runId = (S.runId || 0) + 1; // lets a Stop tapped while the microphone is still starting cancel this start
   ui(); setStatus('connecting', 'Starting microphone...');
   try{ await startAudio(); }
-  catch(e){ showBanner(micErrorText(e), 'error'); teardown('error'); return; }
+  catch(e){ if (S.runId !== run) return; showBanner(micErrorText(e), 'error'); teardown('error'); return; }
+  if (!S.running || S.runId !== run){ stopMic(); return; }
   S.lastChunk = performance.now();
   startTimer(); requestWake();
   connectWS();
@@ -978,6 +992,8 @@ function applyMode(){
   el.en.setAttribute('data-empty', B + ' will appear here when you tap Start.');
   el.uk.setAttribute('data-empty', A + ' text will appear here.');
   el.showEnText.textContent = 'Show ' + B; el.showUkText.textContent = 'Show ' + A;
+  el.subs.textContent = 'Big ' + A + ' subtitles';
+  el.subs.title = 'Speak ' + B + '. ' + A + ' fills the screen in large text and the controls are hidden. Best with the device on a stand, sideways.';
   el.modeHint.textContent = m.hint;
   el.panes.classList.toggle('both', S.mode === 'both');
   el.modeBtns.forEach(function(b){
@@ -1037,6 +1053,19 @@ el.theme.addEventListener('click', function(){
   var next = cur === 'dark' ? 'light' : 'dark';
   root.dataset.theme = next; store.set('theme', next);
 });
+el.cleanStart.addEventListener('click', function(){ el.start.click(); });
+// One tap: speak the second language, show the first one large and alone, hide the controls. Meant for a device on a stand.
+function subtitlesView(){
+  closeDialog(el.more);
+  if (S.running || S.demo){ showBanner('Stop first, then switch to subtitles.', 'info'); return; }
+  setMode('ba');
+  el.showEn.checked = false; el.showUk.checked = true; applyPanes();
+  setFont(Math.max(curFont(), Math.round(Math.max(36, Math.min(90, window.innerWidth / 16)))));
+  setClean(true);
+  showBanner('Subtitles view. Tap Start (top right), then speak ' + langName(S.langB) + '. ' + langName(S.langA) + ' appears large. Tap Show controls to leave.' +
+    (window.innerHeight > window.innerWidth ? ' Turning the device sideways makes the text bigger.' : ''), 'info');
+}
+el.subs.addEventListener('click', subtitlesView);
 el.clean.addEventListener('click', function(){ setClean(true); });
 el.clean2.addEventListener('click', function(){ closeDialog(el.more); setClean(true); });
 el.unclean.addEventListener('click', function(){ setClean(false); });
