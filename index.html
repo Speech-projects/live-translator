@@ -149,7 +149,13 @@ body.standalone{padding-top:calc(30px + env(safe-area-inset-top))}
 #checkDetails[hidden]{display:none}
 a{color:var(--accent)}
 @media (max-width:760px){ #panes.side{flex-direction:column} }
-@media (max-width:480px){ .brand span, #cost{display:none} #dock .optional{display:none} }
+@media (max-width:480px){
+  .brand span, #cost{display:none} #dock .optional{display:none}
+  /* phone: a full-width Start button on its own row, with the smaller controls evenly spread beneath it */
+  #dock{flex-wrap:wrap}
+  #dock .primary{flex:1 1 100%; min-height:54px}
+  #dock button:not(.primary){flex:1 1 0; min-width:0; padding:10px 4px}
+}
 </style>
 </head>
 <body>
@@ -184,6 +190,8 @@ a{color:var(--accent)}
   <button id="startBtn" class="primary">Start</button>
   <button id="fsDown" aria-label="Smaller text">A-</button>
   <button id="fsUp" aria-label="Larger text">A+</button>
+  <button id="swapBtn" aria-label="Swap which language is large and on top" title="Swap which language is large and on top">Swap</button>
+  <button id="clearBtn" aria-label="Clear the screen" title="Clear the screen">Clear</button>
   <button id="cleanBtn" class="optional" title="Hide the controls for projecting">Clean</button>
   <button id="moreBtn" aria-haspopup="dialog">More</button>
 </nav>
@@ -213,13 +221,11 @@ a{color:var(--accent)}
     <label class="chk"><input type="checkbox" id="showUk" checked> <span id="showUkText">Show Ukrainian</span></label>
   </div>
   <div class="grid">
-    <button id="swapBtn">Swap panes</button>
     <button id="layoutBtn">Side by side</button>
     <button id="themeBtn">Light / Dark</button>
     <button id="cleanBtn2">Clean view</button>
     <button id="fullBtn">Full screen</button>
     <button id="demoBtn" title="Shows sample text so you can see the layout. No microphone or internet needed.">Demo</button>
-    <button id="clearBtn">Clear</button>
     <button id="saveBtn">Save transcript</button>
     <button id="settingsBtn">Settings</button>
   </div>
