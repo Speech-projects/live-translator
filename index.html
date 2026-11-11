@@ -133,6 +133,12 @@ label.chk input{width:22px; height:22px; flex:none}
 .seg button:last-child{border-radius:0 12px 12px 0}
 .seg button[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:700; position:relative}
 .checks{display:grid; grid-template-columns:1fr 1fr; gap:0 10px; margin-bottom:2px}
+.langs{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 0 12px}
+.lang span{display:block; font-size:14px; color:var(--muted); margin-bottom:4px}
+.lang select{width:100%}
+/* Home Screen app on a newer iPhone: iOS fades whatever sits right under the status bar, so start lower */
+body.standalone{padding-top:calc(30px + env(safe-area-inset-top))}
+@media (display-mode: standalone){ body{padding-top:calc(30px + env(safe-area-inset-top))} }
 #checkResult{font-size:15px; margin-top:10px; min-height:1.3em; line-height:1.4}
 #checkDetails{font:12px/1.45 Consolas,Menlo,monospace; white-space:pre-wrap; word-break:break-word; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:8px 10px; margin:8px 0 0; user-select:all; -webkit-user-select:all; max-height:200px; overflow:auto}
 #checkDetails[hidden]{display:none}
@@ -181,11 +187,16 @@ a{color:var(--accent)}
 
 <dialog id="more" class="sheet" tabindex="-1">
   <h2>Controls</h2>
+  <div class="field-label" id="langLabel">Languages (stop first to change them)</div>
+  <div class="langs" role="group" aria-labelledby="langLabel">
+    <label class="lang"><span>Language 1</span><select id="langA"></select></label>
+    <label class="lang"><span>Language 2</span><select id="langB"></select></label>
+  </div>
   <div class="field-label" id="dirLabel">Direction (stop first to change it)</div>
   <div class="seg" role="group" aria-labelledby="dirLabel">
-    <button id="modeUkEn" data-mode="uk-en" aria-pressed="true">Ukr to Eng</button>
+    <button id="modeUkEn" data-mode="ab" aria-pressed="true">Ukr to Eng</button>
     <button id="modeBoth" data-mode="both" aria-pressed="false">Both ways</button>
-    <button id="modeEnUk" data-mode="en-uk" aria-pressed="false">Eng to Ukr</button>
+    <button id="modeEnUk" data-mode="ba" aria-pressed="false">Eng to Ukr</button>
   </div>
   <div class="hint" id="modeHint" style="margin-bottom:12px"></div>
   <div class="field">
@@ -193,8 +204,8 @@ a{color:var(--accent)}
     <select id="micSel"><option value="">Default microphone</option></select>
   </div>
   <div class="checks">
-    <label class="chk"><input type="checkbox" id="showEn" checked> Show English</label>
-    <label class="chk"><input type="checkbox" id="showUk" checked> Show Ukrainian</label>
+    <label class="chk"><input type="checkbox" id="showEn" checked> <span id="showEnText">Show English</span></label>
+    <label class="chk"><input type="checkbox" id="showUk" checked> <span id="showUkText">Show Ukrainian</span></label>
   </div>
   <div class="grid">
     <button id="swapBtn">Swap panes</button>
@@ -226,9 +237,9 @@ a{color:var(--accent)}
     <div class="hint">Leave as is unless Soniox retires this model name.</div>
   </div>
   <div class="field">
-    <label for="hintsInput">Language hints (comma separated)</label>
-    <input type="text" id="hintsInput" autocapitalize="off" autocorrect="off" spellcheck="false">
-    <div class="hint">uk,en helps when the speaker mixes in English terms. Use uk alone for pure Ukrainian.</div>
+    <label for="hintsInput">Extra language hints (optional)</label>
+    <input type="text" id="hintsInput" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="for example: de">
+    <div class="hint">The two languages you picked are always included. Add other language codes, separated by commas, only if a third language is also spoken.</div>
   </div>
   <div class="row">
     <button id="checkBtn">Check connection</button>
@@ -246,7 +257,11 @@ a{color:var(--accent)}
 /* ---------- constants ---------- */
 var WS_URL = 'wss://stt-rt.soniox.com/transcribe-websocket';
 var DEFAULT_MODEL = 'stt-rt-v6';
-var DEFAULT_HINTS = 'uk,en';
+// The 60 languages Soniox lists as supported for both transcription and translation (any pair can be translated).
+var LANGS = [['af','Afrikaans'],['sq','Albanian'],['ar','Arabic'],['az','Azerbaijani'],['eu','Basque'],['be','Belarusian'],['bn','Bengali'],['bs','Bosnian'],['bg','Bulgarian'],['ca','Catalan'],['zh','Chinese'],['hr','Croatian'],['cs','Czech'],['da','Danish'],['nl','Dutch'],['en','English'],['et','Estonian'],['fi','Finnish'],['fr','French'],['gl','Galician'],['de','German'],['el','Greek'],['gu','Gujarati'],['he','Hebrew'],['hi','Hindi'],['hu','Hungarian'],['id','Indonesian'],['it','Italian'],['ja','Japanese'],['kn','Kannada'],['kk','Kazakh'],['ko','Korean'],['lv','Latvian'],['lt','Lithuanian'],['mk','Macedonian'],['ms','Malay'],['ml','Malayalam'],['mr','Marathi'],['no','Norwegian'],['fa','Persian'],['pl','Polish'],['pt','Portuguese'],['pa','Punjabi'],['ro','Romanian'],['ru','Russian'],['sr','Serbian'],['sk','Slovak'],['sl','Slovenian'],['es','Spanish'],['sw','Swahili'],['sv','Swedish'],['tl','Tagalog'],['ta','Tamil'],['te','Telugu'],['th','Thai'],['tr','Turkish'],['uk','Ukrainian'],['ur','Urdu'],['vi','Vietnamese'],['cy','Welsh']];
+var DEFAULT_LANG_A = 'uk', DEFAULT_LANG_B = 'en';
+function langName(code){ for (var i = 0; i < LANGS.length; i++) if (LANGS[i][0] === code) return LANGS[i][1]; return ''; }
+function langShort(code){ return langName(code).slice(0, 3); }
 var RATE_PER_HOUR = 0.18; // rough estimate shown on screen only; check Soniox pricing
 var NOTICE = 'While Live, microphone audio is sent over the internet to Soniox, a commercial speech service, for transcription and translation.\n\nDo not use it for classified, controlled, or otherwise non-releasable material, and confirm local policy before using it in class.\n\nContinue?';
 
@@ -278,6 +293,7 @@ var el = {
   panes: $('panes'), paneUk: $('paneUk'), paneEn: $('paneEn'), en: $('enText'), uk: $('ukText'),
   modeTitle: $('modeTitle'), enLabel: $('enLabel'), ukLabel: $('ukLabel'), modeHint: $('modeHint'),
   showEn: $('showEn'), swapBtn: $('swapBtn'), modeBtns: Array.prototype.slice.call(document.querySelectorAll('.seg button')),
+  langA: $('langA'), langB: $('langB'), showEnText: $('showEnText'), showUkText: $('showUkText'),
   unclean: $('unclean'), dlg: $('settings'), key: $('keyInput'), showKey: $('showKey'),
   model: $('modelInput'), hints: $('hintsInput'),
   check: $('checkBtn'), saveSettings: $('saveSettings'), closeSettings: $('closeSettings'),
@@ -319,18 +335,25 @@ function workletSource(){
 }
 
 /* ---------- state ---------- */
-var MODES = {
-  'uk-en': { title:'Ukrainian to English', en:'English (machine translation)', uk:'Ukrainian (what the speaker said)', swap:false,
-    hint:'Ukrainian speech becomes English text.' },
-  'both':  { title:'Both ways', en:'English', uk:'Ukrainian', swap:null,
-    hint:'Each sentence is translated into the other language, so English and Ukrainian speakers can both talk. Lines with a bar are machine translation.' },
-  'en-uk': { title:'English to Ukrainian', en:'English (what the speaker said)', uk:'Ukrainian (machine translation)', swap:true,
-    hint:'English speech becomes Ukrainian text. The Ukrainian pane is shown large.' }
-};
-function modeSource(){ return S.mode === 'en-uk' ? 'en' : 'uk'; }
-function modeTarget(){ return S.mode === 'en-uk' ? 'uk' : 'en'; }
+// Two language slots. Slot 1 (langA, default Ukrainian) is the pane and line set named "uk" in the code below;
+// slot 2 (langB, default English) is the one named "en". The names date from the first version, which was only Ukrainian and English.
+// Modes: 'ab' = language 1 is spoken and shown as language 2 text, 'both' = either way, 'ba' = language 2 spoken, shown as language 1.
+var MODES = {};
+function rebuildModes(){
+  var A = langName(S.langA), B = langName(S.langB), a3 = langShort(S.langA), b3 = langShort(S.langB);
+  MODES = {
+    'ab':   { title: A + ' to ' + B, btn: a3 + ' to ' + b3, en: B + ' (machine translation)', uk: A + ' (what the speaker said)', swap:false,
+      hint: A + ' speech becomes ' + B + ' text.' },
+    'both': { title:'Both ways', btn:'Both ways', en: B, uk: A, swap:null,
+      hint:'Each sentence is translated into the other language, so ' + B + ' and ' + A + ' speakers can both talk. Lines with a bar are machine translation.' },
+    'ba':   { title: B + ' to ' + A, btn: b3 + ' to ' + a3, en: B + ' (what the speaker said)', uk: A + ' (machine translation)', swap:true,
+      hint: B + ' speech becomes ' + A + ' text. The ' + A + ' pane is shown large.' }
+  };
+}
+function modeSource(){ return S.mode === 'ba' ? 'en' : 'uk'; }
+function modeTarget(){ return S.mode === 'ba' ? 'uk' : 'en'; }
 var S = {
-  mode:'uk-en',
+  mode:'ab', langA:DEFAULT_LANG_A, langB:DEFAULT_LANG_B,
   running:false, demo:false, stopping:false, fatal:false,
   ws:null, ready:false, queue:[], reconnects:0, everOpened:false, triedLegacy:false,
   authMode: store.get('authMode', 'protocol'),
@@ -360,6 +383,7 @@ function ui(){
   el.demo.textContent = S.demo ? 'Stop demo' : 'Demo';
   el.demo.disabled = S.running && !S.demo;
   el.modeBtns.forEach(function(b){ b.disabled = S.running; });
+  el.langA.disabled = el.langB.disabled = S.running;
 }
 function meter(level){ el.meter.style.width = Math.min(100, Math.round(level * 140)) + '%'; }
 function openDialog(d){
@@ -434,8 +458,8 @@ function handleMessage(m){
       if (txt === '<end>' || txt === '<fin>') continue;
       // Every token carries its language, so text goes to the pane of its own language, spoken or translated.
       var isTr = t.translation_status === 'translation';
-      var lang = String(t.language || '').slice(0, 2).toLowerCase();
-      if (lang !== 'en' && lang !== 'uk') lang = isTr ? modeTarget() : modeSource(); // no usable tag: translated text goes to the target language, spoken text to the source
+      var code = String(t.language || '').toLowerCase().split(/[-_]/)[0];
+      var lang = code === S.langA ? 'uk' : (code === S.langB ? 'en' : (isTr ? modeTarget() : modeSource())); // no usable tag: translated text goes to the target language, spoken text to the source
       if (t.is_final) append(lang, txt, isTr);
       else if (lang === 'en'){ if (!T.tailEn) T.tailEnTr = isTr; T.tailEn += txt; }
       else { if (!T.tailUk) T.tailUkTr = isTr; T.tailUk += txt; }
@@ -450,7 +474,7 @@ function explain(code, type, message){
   else if (code === 402) base = 'Soniox says the credit or monthly budget is used up. Add credit or raise the limit in the Soniox console.';
   else if (code === 429) base = 'Soniox says too many streams are open on this account. Close other copies of this page, or wait a minute.';
   else if (code === 400) base = 'Soniox rejected the request settings. Check the model name and language hints in Settings.' +
-    (S.mode === 'both' ? ' If this started after choosing Both ways, open More and set Direction back to Ukr to Eng, then try again.' : '');
+    (S.mode === 'both' ? ' If this started after choosing Both ways or new languages, open More and set Direction to ' + MODES.ab.btn + ' (or pick Ukrainian and English), then try again.' : '');
   else base = 'Soniox reported an error (' + code + ').';
   return base + (message ? ' Details: ' + message : '') + (type ? ' [' + type + ']' : '');
 }
@@ -553,10 +577,9 @@ function flushQueue(){
 /* ---------- connection ---------- */
 function getKey(){ return el.key.value.trim(); }
 function getHints(){
-  var h = (el.hints.value || DEFAULT_HINTS).split(',').map(function(s){ return s.trim(); }).filter(Boolean);
-  if (!h.length) h = ['uk'];
-  // when English is spoken too, both languages must be listed as hints
-  if (S.mode !== 'uk-en') ['en', 'uk'].forEach(function(l){ if (h.indexOf(l) < 0) h.push(l); });
+  // the two chosen languages are always hints; extra codes typed in Settings follow them
+  var h = [S.langA, S.langB];
+  (el.hints.value || '').split(',').forEach(function(s){ s = s.trim().toLowerCase(); if (s && h.indexOf(s) < 0) h.push(s); });
   return h;
 }
 function buildConfig(){
@@ -567,12 +590,12 @@ function buildConfig(){
     enable_endpoint_detection: true, max_endpoint_delay_ms: 2000
   };
   if (S.mode === 'both'){
-    cfg.translation = { type:'two_way', language_a:'uk', language_b:'en' };
+    cfg.translation = { type:'two_way', language_a:S.langA, language_b:S.langB };
     cfg.enable_language_identification = true;
-  } else if (S.mode === 'en-uk'){
-    cfg.translation = { type:'one_way', target_language:'uk' };
+  } else if (S.mode === 'ba'){
+    cfg.translation = { type:'one_way', target_language:S.langA };
   } else {
-    cfg.translation = { type:'one_way', target_language:'en' };
+    cfg.translation = { type:'one_way', target_language:S.langB };
   }
   return cfg;
 }
@@ -777,18 +800,19 @@ async function checkConnection(){
 }
 
 /* ---------- demo mode ---------- */
-var DEMO = [
-  ['Доброго ранку, колеги.', 'Good morning, colleagues.'],
-  ['Сьогодні ми розглянемо основи аналізу розвідувальної інформації.', 'Today we will look at the basics of intelligence analysis.'],
-  ['Будь ласка, відкрийте свої нотатки та дайте відповідь на запитання на екрані.', 'Please open your notes and answer the question on the screen.'],
-  ['Перший крок розвідувального циклу: планування та керівництво.', 'The first step of the intelligence cycle is planning and direction.']
-];
+// The same four sample sentences in the three languages the demo knows. Other languages have no demo text.
+var DEMO = {
+  uk: ['Доброго ранку, колеги.', 'Сьогодні ми розглянемо основи аналізу розвідувальної інформації.', 'Будь ласка, відкрийте свої нотатки та дайте відповідь на запитання на екрані.', 'Перший крок розвідувального циклу: планування та керівництво.'],
+  en: ['Good morning, colleagues.', 'Today we will look at the basics of intelligence analysis.', 'Please open your notes and answer the question on the screen.', 'The first step of the intelligence cycle is planning and direction.'],
+  de: ['Guten Morgen, liebe Kolleginnen und Kollegen.', 'Heute betrachten wir die Grundlagen der nachrichtendienstlichen Analyse.', 'Bitte öffnen Sie Ihre Notizen und beantworten Sie die Frage auf dem Bildschirm.', 'Der erste Schritt des Nachrichtenzyklus ist die Planung und Steuerung.']
+};
 function demoMessages(pair, spoken){
-  // spoken = the language the demo speaker uses; the other language arrives as machine translation
+  // pair = [language 1 text, language 2 text]. spoken = 'uk' when language 1 is spoken, 'en' when language 2 is spoken;
+  // the other language arrives as machine translation.
   var wordsOf = function(s){ return s.split(' ').map(function(w, i){ return (i ? ' ' : '') + w; }); };
   var enSpoken = spoken === 'en';
   var U = wordsOf(enSpoken ? pair[1] : pair[0]), E = wordsOf(enSpoken ? pair[0] : pair[1]);
-  var origLang = enSpoken ? 'en' : 'uk', trLang = enSpoken ? 'uk' : 'en';
+  var origLang = enSpoken ? S.langB : S.langA, trLang = enSpoken ? S.langA : S.langB;
   var fu = 0, fe = 0, out = [];
   var tok = function(text, fin, tr){
     return { text:text, is_final:fin, translation_status: tr ? 'translation' : 'original', language: tr ? trLang : origLang };
@@ -811,14 +835,19 @@ function demoMessages(pair, spoken){
 function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
 async function runDemo(){
   if (S.running) return;
+  var dA = DEMO[S.langA], dB = DEMO[S.langB];
+  if (!dA || !dB){
+    showBanner('The demo has sample text only for English, German and Ukrainian. Pick two of those languages to see it.', 'info');
+    return;
+  }
   S.running = true; S.demo = true; S.fatal = false;
   clearAll(); ui(); setStatus('live', 'DEMO');
   showBanner('Demo mode: simulated text only. No microphone, no internet, not a real translation.', 'info');
   el.cost.textContent = ''; startTimer();
-  for (var p = 0; p < DEMO.length; p++){
+  for (var p = 0; p < dA.length; p++){
     // the demo speaks the language that matches the chosen direction; in Both ways it alternates so both panes fill
-    var spoken = S.mode === 'en-uk' ? 'en' : (S.mode === 'both' ? (p % 2 ? 'en' : 'uk') : 'uk');
-    var msgs = demoMessages(DEMO[p], spoken);
+    var spoken = S.mode === 'ba' ? 'en' : (S.mode === 'both' ? (p % 2 ? 'en' : 'uk') : 'uk');
+    var msgs = demoMessages([dA[p], dB[p]], spoken);
     for (var i = 0; i < msgs.length; i++){
       if (!S.demo) return;
       handleMessage(msgs[i]); await sleep(260);
@@ -853,8 +882,9 @@ function saveTranscript(){
     return arr.map(function(s, i){ s = s.trim(); return (s && S.mode === 'both' && fl[i]) ? '[translated] ' + s : s; }).filter(Boolean).join('\n');
   };
   var body = 'Live Translator transcript\nSaved: ' + d.toLocaleString() + '\nDirection: ' + MODES[S.mode].title +
+    '\nLanguages: ' + langName(S.langA) + ' and ' + langName(S.langB) +
     '\nNote: machine translation, not an official translation.\n\n' +
-    'ENGLISH\n' + side('en') + '\n\nUKRAINIAN\n' + side('uk') + '\n';
+    langName(S.langB).toUpperCase() + '\n' + side('en') + '\n\n' + langName(S.langA).toUpperCase() + '\n' + side('uk') + '\n';
   var name = 'translation-' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + '-' + pad(d.getHours()) + pad(d.getMinutes()) + '.txt';
   deliver(name, body);
 }
@@ -893,13 +923,38 @@ el.save.addEventListener('click', function(){ closeDialog(el.more); saveTranscri
 el.fsDown.addEventListener('click', function(){ setFont(curFont() - 4); });
 el.fsUp.addEventListener('click', function(){ setFont(curFont() + 4); });
 function applyMode(){
-  var m = MODES[S.mode];
+  var m = MODES[S.mode], A = langName(S.langA), B = langName(S.langB);
   el.modeTitle.textContent = m.title;
   el.enLabel.textContent = m.en; el.ukLabel.textContent = m.uk;
+  el.en.setAttribute('data-empty', B + ' will appear here when you tap Start.');
+  el.uk.setAttribute('data-empty', A + ' text will appear here.');
+  el.showEnText.textContent = 'Show ' + B; el.showUkText.textContent = 'Show ' + A;
   el.modeHint.textContent = m.hint;
   el.panes.classList.toggle('both', S.mode === 'both');
-  el.modeBtns.forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.mode === S.mode ? 'true' : 'false'); });
+  el.modeBtns.forEach(function(b){
+    b.setAttribute('aria-pressed', b.dataset.mode === S.mode ? 'true' : 'false');
+    b.textContent = MODES[b.dataset.mode].btn;
+  });
 }
+function fillLangSelect(sel, value){
+  if (!sel.options.length) LANGS.forEach(function(l){ sel.add(new Option(l[1], l[0])); });
+  sel.value = value;
+}
+// Picking a language that is already in the other slot swaps the two, so the same language is never used twice.
+function setLanguages(a, b){
+  if (S.running || !langName(a) || !langName(b) || a === b){ fillLangSelect(el.langA, S.langA); fillLangSelect(el.langB, S.langB); return; }
+  if ((a !== S.langA || b !== S.langB) && hasText() &&
+      !confirm('Changing the languages clears the screen. Use Save transcript first if you need the text. Continue?')){
+    fillLangSelect(el.langA, S.langA); fillLangSelect(el.langB, S.langB); return;
+  }
+  var changed = a !== S.langA || b !== S.langB;
+  S.langA = a; S.langB = b; store.set('langA', a); store.set('langB', b);
+  fillLangSelect(el.langA, a); fillLangSelect(el.langB, b);
+  rebuildModes(); applyMode();
+  if (changed) clearAll();
+}
+el.langA.addEventListener('change', function(){ var x = el.langA.value; setLanguages(x, x === S.langB ? S.langA : S.langB); });
+el.langB.addEventListener('change', function(){ var y = el.langB.value; setLanguages(y === S.langA ? S.langB : S.langA, y); });
 function setSwap(on){ document.body.classList.toggle('swap', on); store.set('swap', on ? '1' : '0'); }
 function setMode(mode){
   if (S.running){ showBanner('Stop first, then change the direction.', 'info'); return; }
@@ -957,7 +1012,7 @@ el.showKey.addEventListener('change', function(){ el.key.type = el.showKey.check
 el.check.addEventListener('click', checkConnection);
 el.saveSettings.addEventListener('click', function(){
   store.set('model', el.model.value.trim() || DEFAULT_MODEL);
-  store.set('hints', el.hints.value.trim() || DEFAULT_HINTS);
+  store.set('hints2', el.hints.value.trim());
   el.checkResult.textContent = 'Saved.';
   setTimeout(function(){ closeDialog(el.dlg); }, 500);
 });
@@ -976,7 +1031,17 @@ if (navigator.mediaDevices && navigator.mediaDevices.addEventListener)
 (function init(){
   var th = store.get('theme', ''); if (th) root.dataset.theme = th;
   var fs = parseInt(store.get('fs', ''), 10); if (fs) setFont(fs);
-  var savedMode = store.get('mode', 'uk-en'); S.mode = MODES[savedMode] ? savedMode : 'uk-en';
+  if (navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) document.body.classList.add('standalone');
+  var la = store.get('langA', DEFAULT_LANG_A), lb = store.get('langB', DEFAULT_LANG_B);
+  if (!langName(la)) la = DEFAULT_LANG_A;
+  if (!langName(lb)) lb = DEFAULT_LANG_B;
+  if (la === lb) lb = la === DEFAULT_LANG_B ? DEFAULT_LANG_A : DEFAULT_LANG_B;
+  S.langA = la; S.langB = lb;
+  fillLangSelect(el.langA, la); fillLangSelect(el.langB, lb);
+  rebuildModes();
+  var savedMode = store.get('mode', 'ab');
+  savedMode = ({ 'uk-en':'ab', 'en-uk':'ba' })[savedMode] || savedMode; // names used by the first version
+  S.mode = MODES[savedMode] ? savedMode : 'ab';
   applyMode();
   var swapPref = store.get('swap', '');
   if (swapPref === '1' || (swapPref === '' && MODES[S.mode].swap === true)) document.body.classList.add('swap');
@@ -991,7 +1056,8 @@ if (navigator.mediaDevices && navigator.mediaDevices.addEventListener)
   var k = sess.get('key', ''); if (k) el.key.value = k;
   el.key.addEventListener('input', function(){ var v = getKey(); if (v) sess.set('key', v); else sess.del('key'); });
   el.model.value = store.get('model', DEFAULT_MODEL);
-  el.hints.value = store.get('hints', DEFAULT_HINTS);
+  store.del('hints'); // the old hints box held "uk,en"; the chosen languages now supply those
+  el.hints.value = store.get('hints2', '');
   ui(); refreshMics();
   if (location.protocol === 'file:' && isIOS())
     showBanner('This copy was opened from a saved file. On iPhone and iPad, live translation only works from the web address. Open the hosted link instead.', 'error');
