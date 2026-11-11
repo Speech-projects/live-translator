@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' blob:; style-src 'unsafe-inline'; img-src data:; connect-src wss://stt-rt.soniox.com https://stt-rt.soniox.com; worker-src blob:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -188,8 +190,8 @@ a{color:var(--accent)}
     <label for="keyInput">Soniox API key</label>
     <input type="password" id="keyInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Paste your key here">
     <label class="chk"><input type="checkbox" id="showKey"> Show key</label>
-    <label class="chk"><input type="checkbox" id="rememberKey"> Remember on this device (stored in this browser, not encrypted)</label>
-    <div class="hint">Get a key at <a href="https://console.soniox.com" target="_blank" rel="noopener">console.soniox.com</a>. Use your own key. Do not email keys around.</div>
+    <div class="hint">The key stays in this page's memory for this session only. It is never saved on the device or on the website, and it goes only to Soniox. You paste it again after closing the app. Keep it in a password manager.</div>
+    <div class="hint">Get a key at <a href="https://console.soniox.com" target="_blank" rel="noopener noreferrer">console.soniox.com</a>. Use your own key. Do not email keys around.</div>
   </div>
   <div class="field">
     <label for="modelInput">Model</label>
@@ -228,6 +230,13 @@ var store = {
   set: function(k, v){ try{ localStorage.setItem('lt.' + k, v); }catch(e){} },
   del: function(k){ try{ localStorage.removeItem('lt.' + k); }catch(e){} }
 };
+// The API key is never put in localStorage: every page on this web address would be able to read it.
+// It lives in the input box, and in sessionStorage (this tab only, gone when the app closes) so a reload keeps it.
+var sess = {
+  get: function(k, d){ try{ var v = sessionStorage.getItem('lt.' + k); return v === null ? d : v; }catch(e){ return d; } },
+  set: function(k, v){ try{ sessionStorage.setItem('lt.' + k, v); }catch(e){} },
+  del: function(k){ try{ sessionStorage.removeItem('lt.' + k); }catch(e){} }
+};
 function pad(n){ return (n < 10 ? '0' : '') + n; }
 function fmt(s){ return pad(Math.floor(s / 3600)) + ':' + pad(Math.floor(s % 3600 / 60)) + ':' + pad(s % 60); }
 function isIOS(){ return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
@@ -241,7 +250,7 @@ var el = {
   banner: $('banner'), bannerText: $('bannerText'), bannerClose: $('bannerClose'),
   panes: $('panes'), paneUk: $('paneUk'), en: $('enText'), uk: $('ukText'),
   unclean: $('unclean'), dlg: $('settings'), key: $('keyInput'), showKey: $('showKey'),
-  remember: $('rememberKey'), model: $('modelInput'), hints: $('hintsInput'),
+  model: $('modelInput'), hints: $('hintsInput'),
   check: $('checkBtn'), saveSettings: $('saveSettings'), closeSettings: $('closeSettings'),
   checkResult: $('checkResult'), checkDetails: $('checkDetails')
 };
@@ -292,8 +301,15 @@ var T = { uk:[''], en:[''], tailUk:'', tailEn:'' };
 
 /* ---------- UI helpers ---------- */
 function setStatus(kind, text){ el.dot.className = kind; el.statusText.textContent = text; }
+// Error text from the browser or the server can echo what was sent, so the key is blanked out of anything shown.
+function scrub(s){
+  s = String(s == null ? '' : s);
+  var k = el.key.value.trim();
+  if (k.length >= 6) s = s.split(k).join('[key hidden]');
+  return s;
+}
 function showBanner(msg, kind, tip){
-  el.bannerText.textContent = msg; el.banner.className = kind || ''; el.banner.hidden = false;
+  el.bannerText.textContent = scrub(msg); el.banner.className = kind || ''; el.banner.hidden = false;
   if (tip) el.banner.dataset.tip = '1'; else delete el.banner.dataset.tip;
 }
 function hideBanner(){ el.banner.hidden = true; delete el.banner.dataset.tip; }
@@ -575,6 +591,7 @@ async function start(){
     showBanner('Add your Soniox API key in Settings first. Or try Demo to see how it looks.', 'info');
     openSettings(); return;
   }
+  sess.set('key', getKey());
   if (store.get('ack', '') !== '1'){
     if (!confirm(NOTICE)) return;
     store.set('ack', '1');
@@ -633,7 +650,7 @@ function checkOnce(mode, key){
       resolve(info);
     }
     try{ ws = openSocket(mode, key); }
-    catch(e){ info.ctor = e.name + ': ' + e.message; done = true; resolve(info); return; }
+    catch(e){ info.ctor = (e.name + ': ' + e.message).split(key).join('[key hidden]'); done = true; resolve(info); return; }
     ws.onopen = function(){
       info.opened = true;
       var cfg = buildConfig(); if (mode === 'message') cfg.api_key = key;
@@ -694,7 +711,8 @@ async function checkConnection(){
     el.checkResult.textContent = 'Soniox is reachable, but the connection was refused or dropped before it replied.' +
       (location.protocol === 'file:' && isIOS() ? ' This page was opened from a saved file on an iPad or iPhone, which blocks live connections. Open it from its web address instead.' : ' Details are below.');
   }
-  if (!good){ el.checkDetails.textContent = lines.join('\n'); el.checkDetails.hidden = false; }
+  el.checkResult.textContent = scrub(el.checkResult.textContent);
+  if (!good){ el.checkDetails.textContent = scrub(lines.join('\n')); el.checkDetails.hidden = false; }
 }
 
 /* ---------- demo mode ---------- */
@@ -845,7 +863,6 @@ outsideClick(el.more); outsideClick(el.dlg);
 el.showKey.addEventListener('change', function(){ el.key.type = el.showKey.checked ? 'text' : 'password'; });
 el.check.addEventListener('click', checkConnection);
 el.saveSettings.addEventListener('click', function(){
-  if (el.remember.checked && getKey()) store.set('key', getKey()); else store.del('key');
   store.set('model', el.model.value.trim() || DEFAULT_MODEL);
   store.set('hints', el.hints.value.trim() || DEFAULT_HINTS);
   el.checkResult.textContent = 'Saved.';
@@ -870,7 +887,9 @@ if (navigator.mediaDevices && navigator.mediaDevices.addEventListener)
   var sidePref = store.get('side', '');
   var side = sidePref === '' ? window.innerWidth >= 1000 : sidePref === '1';
   if (side){ el.panes.classList.add('side'); el.layout.textContent = 'Stacked'; }
-  var k = store.get('key', ''); if (k){ el.key.value = k; el.remember.checked = true; }
+  store.del('key'); // earlier versions could save the key on the device; remove any such copy
+  var k = sess.get('key', ''); if (k) el.key.value = k;
+  el.key.addEventListener('input', function(){ var v = getKey(); if (v) sess.set('key', v); else sess.del('key'); });
   el.model.value = store.get('model', DEFAULT_MODEL);
   el.hints.value = store.get('hints', DEFAULT_HINTS);
   ui(); refreshMics();
@@ -879,7 +898,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.addEventListener)
   else if (location.protocol === 'http:' && !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname))
     showBanner('This page was opened over plain http, so the browser will block the microphone. Use the https address.', 'error');
   else if (isIOS() && !navigator.standalone && store.get('a2hs', '') !== '1')
-    showBanner('Tip: tap the Share button, then Add to Home Screen. It opens full screen and keeps your key saved.', 'info', true);
+    showBanner('Tip: tap the Share button, then Add to Home Screen. It opens full screen like an app.', 'info', true);
 })();
 
 })();
