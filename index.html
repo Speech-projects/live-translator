@@ -174,6 +174,11 @@ body.subs .text > p:first-child{margin-top:auto}
 #hearing{color:var(--muted); font-size:13px; white-space:nowrap}
 #hearing[hidden]{display:none}
 .bbtns{display:flex; gap:8px; flex:none}
+.speakrow{margin:2px 0 12px}
+.speakrow[hidden]{display:none}
+.speakline{display:flex; gap:10px; align-items:center}
+.speakline .chk{flex:1}
+.speakline select{min-width:118px; min-height:40px; padding:6px 30px 6px 12px}
 .setups{display:flex; gap:8px; margin:0 0 12px}
 .setups select{flex:1; min-width:0}
 .setups button{padding:8px 14px}
@@ -259,6 +264,21 @@ a{color:var(--accent)}
     <button id="modeEnUk" data-mode="ba" aria-pressed="false">Eng to Ukr</button>
   </div>
   <div class="hint" id="modeHint" style="margin-bottom:12px"></div>
+  <div class="grid">
+    <button id="subsBtn" class="wide">Subtitles</button>
+    <button id="cleanBtn2">Clean view</button>
+    <button id="fullBtn">Full screen</button>
+    <button id="layoutBtn">Side by side</button>
+    <button id="themeBtn">Light / Dark</button>
+    <button id="demoBtn" title="Shows sample text so you can see the layout. No microphone or internet needed.">Demo</button>
+    <button id="saveBtn">Save transcript</button>
+    <button id="settingsBtn">Settings</button>
+    <button id="flipBtn" aria-pressed="false" title="Turns the screen upside down, so you can hold the phone with its bottom edge toward the speaker.">Upside down</button>
+  </div>
+  <div class="checks">
+    <label class="chk"><input type="checkbox" id="showEn" checked> <span id="showEnText">Show English</span></label>
+    <label class="chk"><input type="checkbox" id="showUk" checked> <span id="showUkText">Show Ukrainian</span></label>
+  </div>
   <div class="field-label" id="setupLabel">Setups (stop first to switch)</div>
   <div class="setups" role="group" aria-labelledby="setupLabel">
     <select id="setupSel" aria-label="Saved setups"><option value="">Choose a setup...</option></select>
@@ -269,20 +289,12 @@ a{color:var(--accent)}
     <label for="micSel">Microphone</label>
     <select id="micSel"><option value="">Default microphone</option></select>
   </div>
-  <div class="checks">
-    <label class="chk"><input type="checkbox" id="showEn" checked> <span id="showEnText">Show English</span></label>
-    <label class="chk"><input type="checkbox" id="showUk" checked> <span id="showUkText">Show Ukrainian</span></label>
-  </div>
-  <div class="grid">
-    <button id="layoutBtn">Side by side</button>
-    <button id="themeBtn">Light / Dark</button>
-    <button id="cleanBtn2">Clean view</button>
-    <button id="fullBtn">Full screen</button>
-    <button id="demoBtn" title="Shows sample text so you can see the layout. No microphone or internet needed.">Demo</button>
-    <button id="saveBtn">Save transcript</button>
-    <button id="settingsBtn">Settings</button>
-    <button id="flipBtn" aria-pressed="false" title="Turns the screen upside down, so you can hold the phone with its bottom edge toward the speaker.">Upside down</button>
-    <button id="subsBtn" class="wide">Subtitles</button>
+  <div class="speakrow" id="speakRow">
+    <div class="speakline">
+      <label class="chk"><input type="checkbox" id="speakOn"> <span>Speak translations aloud (beta)</span></label>
+      <select id="speakLang" aria-label="Language to speak aloud"></select>
+    </div>
+    <div class="hint">Reads each finished translation aloud in the language you pick, one sentence at a time. Use earbuds: from a speaker, the microphone would hear it.</div>
   </div>
   <p class="hint">While Live, microphone audio is sent over the internet to Soniox. Machine translation can be wrong; treat it as an aid, not an official translation.</p>
   <button id="closeMore" style="width:100%">Close</button>
@@ -377,6 +389,7 @@ var el = {
   model: $('modelInput'), hints: $('hintsInput'), gloss: $('glossInput'), glossCount: $('glossCount'),
   hearing: $('hearing'), bannerAction: $('bannerAction'), bannerFn: null,
   setupSel: $('setupSel'), setupSave: $('setupSave'), setupDel: $('setupDel'),
+  speakRow: $('speakRow'), speakOn: $('speakOn'), speakLang: $('speakLang'),
   check: $('checkBtn'), saveSettings: $('saveSettings'), closeSettings: $('closeSettings'),
   checkResult: $('checkResult'), checkDetails: $('checkDetails')
 };
@@ -551,12 +564,13 @@ function handleMessage(m){
     T.tailUk = ''; T.tailEn = '';
     for (var i = 0; i < m.tokens.length; i++){
       var t = m.tokens[i], txt = t.text || '';
-      if (txt === '<end>' || txt === '<fin>') continue;
+      if (txt === '<end>' || txt === '<fin>'){ if (txt === '<end>') ttsFlush(); continue; }
       // Every token carries its language, so text goes to the pane of its own language, spoken or translated.
       var isTr = t.translation_status === 'translation';
       var code = String(t.language || '').toLowerCase().split(/[-_]/)[0];
       var lang = code === S.langA ? 'uk' : (code === S.langB ? 'en' : (isTr ? modeTarget() : modeSource())); // no usable tag: translated text goes to the target language, spoken text to the source
       if (!isTr && S.mode === 'both' && langName(code)) setHearing(code);
+      if (isTr && t.is_final) ttsFeed(lang === 'uk' ? S.langA : S.langB, txt);
       if (t.is_final) append(lang, txt, isTr);
       else if (lang === 'en'){ if (!T.tailEn) T.tailEnTr = isTr; T.tailEn += txt; }
       else { if (!T.tailUk) T.tailUkTr = isTr; T.tailUk += txt; }
@@ -809,6 +823,7 @@ function releaseWake(){ try{ if (S.wake) S.wake.release(); }catch(e){} S.wake = 
 
 async function start(){
   if (S.running) return;
+  if (TTS.on) ttsUnlock();
   hideBanner();
   if (!getKey()){
     showBanner('Add your Soniox API key in Settings first. Or try Demo to see how it looks.', 'info');
@@ -836,6 +851,7 @@ function teardown(kind){
   if (ws){ try{ ws.close(); }catch(e){} }
   S.running = false; S.stopping = false; S.demo = false; S.ready = false; S.queue = []; S.stopResolve = null; S.noAudio = false;
   el.hearing.hidden = true;
+  ttsStop();
   promoteTails();
   setStatus(kind === 'error' ? 'error' : 'idle', kind === 'error' ? 'Stopped (error)' : 'Idle');
   ui();
@@ -944,6 +960,58 @@ async function checkConnection(){
   if (!good){ el.checkDetails.textContent = scrub(lines.join('\n')); el.checkDetails.hidden = false; }
 }
 
+/* ---------- speak translations aloud (beta) ---------- */
+// Reads finished, machine-translated sentences in the chosen language with the device's own voices (no extra service, no extra cost).
+// Off by default. Only translated text is ever spoken, never what the speaker said. Meant for earbuds: from a speaker the microphone hears it.
+var TTS = { on:false, code:'', buf:'', timer:0, pending:0, gen:0 };
+var TTS_LANG = { en:'en-US', uk:'uk-UA', de:'de-DE', fr:'fr-FR', es:'es-ES', ru:'ru-RU', pl:'pl-PL', it:'it-IT', pt:'pt-PT', nl:'nl-NL', cs:'cs-CZ', ro:'ro-RO',
+  bg:'bg-BG', hr:'hr-HR', sk:'sk-SK', sl:'sl-SI', sr:'sr-RS', el:'el-GR', tr:'tr-TR', ar:'ar-SA', he:'he-IL', hi:'hi-IN', ja:'ja-JP', ko:'ko-KR',
+  zh:'zh-CN', fi:'fi-FI', sv:'sv-SE', da:'da-DK', no:'nb-NO', hu:'hu-HU', lt:'lt-LT', lv:'lv-LV', et:'et-EE', id:'id-ID', vi:'vi-VN', th:'th-TH', tl:'fil-PH' };
+function ttsAvailable(){ return !!(window.speechSynthesis && window.SpeechSynthesisUtterance); }
+function ttsVoice(code){
+  try{
+    var vs = window.speechSynthesis.getVoices() || [];
+    var m = vs.filter(function(v){ return String(v.lang || '').toLowerCase().split(/[-_]/)[0] === code; });
+    if (!m.length) return null;
+    var good = m.filter(function(v){ return /enhanced|premium|siri/i.test(v.name); });
+    return good[0] || m[0];
+  }catch(e){ return null; }
+}
+// iOS only lets a page speak after it has spoken once inside a tap, so a silent word is spoken in the tap that turns it on, starts a session or starts the demo
+function ttsUnlock(){
+  try{ var u = new window.SpeechSynthesisUtterance(' '); u.volume = 0; window.speechSynthesis.speak(u); }catch(e){}
+}
+function ttsSay(code, text){
+  text = String(text).replace(/\s+/g, ' ').trim();
+  if (!text || !ttsAvailable()) return;
+  if (TTS.pending >= 3){ ttsCancel(); } // fell behind: skip ahead to the newest sentence rather than lag further
+  var gen = TTS.gen, u = new window.SpeechSynthesisUtterance(text);
+  u.lang = TTS_LANG[code] || code; u.rate = 1.05;
+  var v = ttsVoice(code); if (v) u.voice = v;
+  TTS.pending++;
+  var done = function(){ if (gen === TTS.gen && TTS.pending > 0) TTS.pending--; };
+  u.onend = done; u.onerror = done;
+  try{ window.speechSynthesis.speak(u); }catch(e){ done(); }
+}
+function ttsCancel(){ TTS.gen++; TTS.pending = 0; try{ window.speechSynthesis.cancel(); }catch(e){} }
+function ttsFlush(){ clearTimeout(TTS.timer); var t = TTS.buf; TTS.buf = ''; if (t.trim()) ttsSay(TTS.code, t); }
+function ttsFeed(code, txt){
+  if (!TTS.on || !ttsAvailable() || code !== TTS.code) return;
+  TTS.buf += txt;
+  clearTimeout(TTS.timer);
+  if (/[.!?…]["')\]»”]*\s*$/.test(TTS.buf) || TTS.buf.length > 240) ttsFlush();
+  else TTS.timer = setTimeout(ttsFlush, 2500); // a sentence with no full stop is spoken after a short pause in the speech
+}
+function ttsStop(){ clearTimeout(TTS.timer); TTS.buf = ''; if (TTS.on && ttsAvailable()) ttsCancel(); }
+// The language box lists the two chosen languages (the second one first: that is the usual "hear English" case)
+function refreshSpeakLang(){
+  var cur = store.get('speakLang', ''), sel = el.speakLang;
+  sel.innerHTML = '';
+  [S.langB, S.langA].forEach(function(c){ sel.add(new Option(langName(c), c)); });
+  sel.value = (cur === S.langA || cur === S.langB) ? cur : S.langB;
+  TTS.code = sel.value;
+}
+
 /* ---------- demo mode ---------- */
 // The same four sample sentences in the three languages the demo knows. Other languages have no demo text.
 var DEMO = {
@@ -986,6 +1054,7 @@ async function runDemo(){
     return;
   }
   S.running = true; S.demo = true; S.fatal = false;
+  if (TTS.on) ttsUnlock();
   clearAll(); ui(); setStatus('live', 'DEMO');
   showBanner('Demo mode: simulated text only. No microphone, no internet, not a real translation.', 'info');
   el.cost.textContent = ''; startTimer();
@@ -999,6 +1068,7 @@ async function runDemo(){
     }
     await sleep(900);
   }
+  for (var w = 0; w < 24 && TTS.on && TTS.pending > 0 && S.demo; w++) await sleep(250); // let the last spoken line finish
   if (S.demo){ teardown('idle'); hideBanner(); }
 }
 function endDemo(){ teardown('idle'); hideBanner(); }
@@ -1076,6 +1146,7 @@ function applyMode(){
   el.showEnText.textContent = 'Show ' + B; el.showUkText.textContent = 'Show ' + A;
   el.subs.textContent = 'Big ' + A + ' subtitles';
   el.subs.title = 'Speak ' + B + '. ' + A + ' fills the screen in large text and the controls are hidden. Best with the device on a stand, sideways.';
+  refreshSpeakLang();
   el.modeHint.textContent = m.hint;
   el.panes.classList.toggle('both', S.mode === 'both');
   el.modeBtns.forEach(function(b){
@@ -1202,6 +1273,22 @@ el.setupDel.addEventListener('click', function(){
   if (!confirm('Delete the setup "' + n + '"?')) return;
   var o = getSetups(); delete o[n]; putSetups(o);
 });
+el.speakOn.addEventListener('change', function(){
+  if (el.speakOn.checked){
+    if (store.get('speakAck', '') !== '1'){
+      if (!confirm('Speak translations aloud (beta)\n\nUse earbuds or headphones. If the voice plays from the speaker, the microphone hears it and translates it again.\n\nIt uses your device\'s own voices, so there is no extra cost. It is not yet proven on every device. Turn it on?')){
+        el.speakOn.checked = false; return;
+      }
+      store.set('speakAck', '1');
+    }
+    TTS.on = true; ttsUnlock();
+  } else { ttsStop(); TTS.on = false; }
+  store.set('speak', TTS.on ? '1' : '0');
+});
+el.speakLang.addEventListener('change', function(){
+  TTS.code = el.speakLang.value; store.set('speakLang', TTS.code);
+  clearTimeout(TTS.timer); TTS.buf = '';
+});
 wireJump(el.en, $('jumpEn')); wireJump(el.uk, $('jumpUk'));
 el.bannerAction.addEventListener('click', function(){ var f = el.bannerFn; hideBanner(); if (f) f(); });
 el.gloss.addEventListener('input', updateGlossCount);
@@ -1299,6 +1386,8 @@ if (navigator.mediaDevices && navigator.mediaDevices.addEventListener)
   el.hints.value = store.get('hints2', '');
   el.gloss.value = store.get('gloss', ''); updateGlossCount();
   refreshSetups();
+  el.speakRow.hidden = !ttsAvailable();
+  TTS.on = store.get('speak', '') === '1' && ttsAvailable(); el.speakOn.checked = TTS.on;
   if (store.get('subs', '') === '1' && !(el.showEn.checked && el.showUk.checked)) document.body.classList.add('subs');
   ui(); refreshMics();
   if (location.protocol === 'file:' && isIOS())
