@@ -80,7 +80,7 @@ button.primary.danger{background:var(--bad); border-color:var(--bad); color:#fff
 }
 #paneEn{flex:3 1 0}
 #paneUk{flex:2 1 0}
-#paneUk[hidden]{display:none}
+#paneUk[hidden], #paneEn[hidden]{display:none}
 .label{font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:4px}
 .text{flex:1; overflow:auto; min-height:0; -webkit-overflow-scrolling:touch}
 .text:empty::before{content:attr(data-empty); color:var(--tail); font-size:17px; font-weight:400}
@@ -89,6 +89,15 @@ button.primary.danger{background:var(--bad); border-color:var(--bad); color:#fff
 .tail{color:var(--tail)}
 #enText{font-size:var(--fs-en); line-height:1.28; font-weight:600}
 #ukText{font-size:var(--fs-uk); line-height:1.35; color:var(--muted)}
+body.swap #paneUk{order:-1; flex:3 1 0}
+body.swap #paneEn{order:0; flex:2 1 0}
+body.swap #ukText{font-size:var(--fs-en); line-height:1.28; font-weight:600; color:var(--ink)}
+body.swap #enText{font-size:var(--fs-uk); line-height:1.35; font-weight:400; color:var(--muted)}
+#panes.solo-en #enText, body.swap #panes.solo-en #enText{font-size:var(--fs-en); line-height:1.28; font-weight:600; color:var(--ink)}
+#panes.solo-uk #ukText, body.swap #panes.solo-uk #ukText{font-size:var(--fs-en); line-height:1.28; font-weight:600; color:var(--ink)}
+.legend{display:none; text-transform:none; letter-spacing:0}
+#panes.both .legend{display:inline}
+#panes.both .text p.tr{border-left:4px solid var(--accent); padding-left:10px}
 #dock{display:flex; gap:8px; padding:2px 0 calc(8px + env(safe-area-inset-bottom)); align-items:stretch}
 #dock .primary{flex:1; min-height:54px; min-width:104px}
 #dock button:not(.primary){min-width:50px; padding:10px 12px}
@@ -117,6 +126,13 @@ label.chk input{width:22px; height:22px; flex:none}
 .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
 .grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:10px 0 12px}
 .hint{font-size:13px; color:var(--muted); line-height:1.45}
+.field-label{font-size:14px; color:var(--muted); margin:0 0 5px}
+.seg{display:grid; grid-template-columns:repeat(3,1fr); margin:0 0 8px}
+.seg button{border-radius:0; padding:10px 6px; font-size:15px; margin-left:-1px}
+.seg button:first-child{border-radius:12px 0 0 12px; margin-left:0}
+.seg button:last-child{border-radius:0 12px 12px 0}
+.seg button[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:700; position:relative}
+.checks{display:grid; grid-template-columns:1fr 1fr; gap:0 10px; margin-bottom:2px}
 #checkResult{font-size:15px; margin-top:10px; min-height:1.3em; line-height:1.4}
 #checkDetails{font:12px/1.45 Consolas,Menlo,monospace; white-space:pre-wrap; word-break:break-word; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:8px 10px; margin:8px 0 0; user-select:all; -webkit-user-select:all; max-height:200px; overflow:auto}
 #checkDetails[hidden]{display:none}
@@ -128,7 +144,7 @@ a{color:var(--accent)}
 <body>
 
 <header>
-  <div class="brand">Live Translator<span>Ukrainian to English</span></div>
+  <div class="brand">Live Translator<span id="modeTitle">Ukrainian to English</span></div>
   <div class="status" aria-live="polite">
     <span id="meter" title="Microphone level"><i></i></span>
     <span id="dot" class="idle"></span>
@@ -142,11 +158,11 @@ a{color:var(--accent)}
 
 <main id="panes">
   <section class="pane" id="paneEn">
-    <div class="label">English (machine translation)</div>
+    <div class="label"><span id="enLabel">English (machine translation)</span><span class="legend"> (bar = machine translation)</span></div>
     <div class="text" id="enText" data-empty="English will appear here when you tap Start."></div>
   </section>
   <section class="pane" id="paneUk">
-    <div class="label">Ukrainian (what the speaker said)</div>
+    <div class="label"><span id="ukLabel">Ukrainian (what the speaker said)</span><span class="legend"> (bar = machine translation)</span></div>
     <div class="text" id="ukText" data-empty="Ukrainian text will appear here."></div>
   </section>
 </main>
@@ -165,12 +181,23 @@ a{color:var(--accent)}
 
 <dialog id="more" class="sheet" tabindex="-1">
   <h2>Controls</h2>
+  <div class="field-label" id="dirLabel">Direction (stop first to change it)</div>
+  <div class="seg" role="group" aria-labelledby="dirLabel">
+    <button id="modeUkEn" data-mode="uk-en" aria-pressed="true">Ukr to Eng</button>
+    <button id="modeBoth" data-mode="both" aria-pressed="false">Both ways</button>
+    <button id="modeEnUk" data-mode="en-uk" aria-pressed="false">Eng to Ukr</button>
+  </div>
+  <div class="hint" id="modeHint" style="margin-bottom:12px"></div>
   <div class="field">
     <label for="micSel">Microphone</label>
     <select id="micSel"><option value="">Default microphone</option></select>
   </div>
-  <label class="chk"><input type="checkbox" id="showUk" checked> Show Ukrainian text</label>
+  <div class="checks">
+    <label class="chk"><input type="checkbox" id="showEn" checked> Show English</label>
+    <label class="chk"><input type="checkbox" id="showUk" checked> Show Ukrainian</label>
+  </div>
   <div class="grid">
+    <button id="swapBtn">Swap panes</button>
     <button id="layoutBtn">Side by side</button>
     <button id="themeBtn">Light / Dark</button>
     <button id="cleanBtn2">Clean view</button>
@@ -248,7 +275,9 @@ var el = {
   showUk: $('showUk'), layout: $('layoutBtn'), theme: $('themeBtn'), clean: $('cleanBtn'), clean2: $('cleanBtn2'),
   full: $('fullBtn'), settingsBtn: $('settingsBtn'), more: $('more'), moreBtn: $('moreBtn'), closeMore: $('closeMore'),
   banner: $('banner'), bannerText: $('bannerText'), bannerClose: $('bannerClose'),
-  panes: $('panes'), paneUk: $('paneUk'), en: $('enText'), uk: $('ukText'),
+  panes: $('panes'), paneUk: $('paneUk'), paneEn: $('paneEn'), en: $('enText'), uk: $('ukText'),
+  modeTitle: $('modeTitle'), enLabel: $('enLabel'), ukLabel: $('ukLabel'), modeHint: $('modeHint'),
+  showEn: $('showEn'), swapBtn: $('swapBtn'), modeBtns: Array.prototype.slice.call(document.querySelectorAll('.seg button')),
   unclean: $('unclean'), dlg: $('settings'), key: $('keyInput'), showKey: $('showKey'),
   model: $('modelInput'), hints: $('hintsInput'),
   check: $('checkBtn'), saveSettings: $('saveSettings'), closeSettings: $('closeSettings'),
@@ -290,14 +319,26 @@ function workletSource(){
 }
 
 /* ---------- state ---------- */
+var MODES = {
+  'uk-en': { title:'Ukrainian to English', en:'English (machine translation)', uk:'Ukrainian (what the speaker said)', swap:false,
+    hint:'Ukrainian speech becomes English text.' },
+  'both':  { title:'Both ways', en:'English', uk:'Ukrainian', swap:null,
+    hint:'Each sentence is translated into the other language, so English and Ukrainian speakers can both talk. Lines with a bar are machine translation.' },
+  'en-uk': { title:'English to Ukrainian', en:'English (what the speaker said)', uk:'Ukrainian (machine translation)', swap:true,
+    hint:'English speech becomes Ukrainian text. The Ukrainian pane is shown large.' }
+};
+function modeSource(){ return S.mode === 'en-uk' ? 'en' : 'uk'; }
+function modeTarget(){ return S.mode === 'en-uk' ? 'uk' : 'en'; }
 var S = {
+  mode:'uk-en',
   running:false, demo:false, stopping:false, fatal:false,
   ws:null, ready:false, queue:[], reconnects:0, everOpened:false, triedLegacy:false,
   authMode: store.get('authMode', 'protocol'),
   stream:null, ctx:null, src:null, node:null,
   t0:0, timerId:0, wake:null, stopResolve:null, lastChunk:0, noAudio:false
 };
-var T = { uk:[''], en:[''], tailUk:'', tailEn:'' };
+// uk / en hold the finished lines; ukTr / enTr say whether each line is machine translation (true) or spoken (false)
+var T = { uk:[''], en:[''], ukTr:[false], enTr:[false], tailUk:'', tailEn:'', tailUkTr:false, tailEnTr:false };
 
 /* ---------- UI helpers ---------- */
 function setStatus(kind, text){ el.dot.className = kind; el.statusText.textContent = text; }
@@ -318,6 +359,7 @@ function ui(){
   el.start.classList.toggle('danger', S.running);
   el.demo.textContent = S.demo ? 'Stop demo' : 'Demo';
   el.demo.disabled = S.running && !S.demo;
+  el.modeBtns.forEach(function(b){ b.disabled = S.running; });
 }
 function meter(level){ el.meter.style.width = Math.min(100, Math.round(level * 140)) + '%'; }
 function openDialog(d){
@@ -328,26 +370,30 @@ function closeDialog(d){ try{ if (d.open) d.close(); }catch(e){ d.removeAttribut
 function openSettings(){ closeDialog(el.more); openDialog(el.dlg); }
 
 /* ---------- transcript model + rendering ---------- */
-function append(lang, txt){
-  var arr = T[lang], i = arr.length - 1;
+function append(lang, txt, tr){
+  var arr = T[lang], fl = T[lang + 'Tr'], i = arr.length - 1;
+  tr = !!tr;
+  if (arr[i] !== '' && fl[i] !== tr){ arr.push(''); fl.push(tr); i++; } // spoken and machine-translated text never share a line
+  if (arr[i] === '') fl[i] = tr;
   // if the line before just ended a sentence, make sure the next word is not glued on
   if (arr[i] && /[.?!…]["')\]»”]*$/.test(arr[i]) && /^[A-Za-zЀ-ӿ]/.test(txt)) arr[i] += ' ';
   arr[i] += txt;
   var cur = arr[i];
-  if (/[.?!…]["')\]»”]*\s*$/.test(txt) && cur.trim().length > 12) arr.push('');
+  if (/[.?!…]["')\]»”]*\s*$/.test(txt) && cur.trim().length > 12){ arr.push(''); fl.push(false); }
 }
 function promoteTails(){
-  if (T.tailUk){ append('uk', T.tailUk); T.tailUk = ''; }
-  if (T.tailEn){ append('en', T.tailEn); T.tailEn = ''; }
+  if (T.tailUk){ append('uk', T.tailUk, T.tailUkTr); T.tailUk = ''; }
+  if (T.tailEn){ append('en', T.tailEn, T.tailEnTr); T.tailEn = ''; }
   scheduleRender();
 }
-function renderPane(box, paras, tail){
+function renderPane(box, paras, flags, tail, tailTr){
   var stick = box.scrollHeight - box.scrollTop - box.clientHeight < 90;
   while (box.children.length < paras.length) box.appendChild(document.createElement('p'));
   var n = paras.length;
   for (var i = Math.max(0, n - 3); i < n; i++){
     var p = box.children[i];
     var text = paras[i].replace(/^\s+/, '');
+    p.className = (flags[i] || (i === n - 1 && !text && tail && tailTr)) ? 'tr' : '';
     if (i === n - 1){
       p.textContent = '';
       if (text) p.appendChild(document.createTextNode(text));
@@ -363,8 +409,8 @@ function renderPane(box, paras, tail){
   if (stick) box.scrollTop = box.scrollHeight;
 }
 function render(){
-  renderPane(el.en, T.en, T.tailEn);
-  renderPane(el.uk, T.uk, T.tailUk);
+  renderPane(el.en, T.en, T.enTr, T.tailEn, T.tailEnTr);
+  renderPane(el.uk, T.uk, T.ukTr, T.tailUk, T.tailUkTr);
 }
 var renderTimer = 0; // a timer, not requestAnimationFrame, so text keeps updating if the window is covered or minimized
 function scheduleRender(){ if (!renderTimer) renderTimer = setTimeout(function(){ renderTimer = 0; render(); }, 30); }
@@ -372,7 +418,8 @@ function hasText(){
   return (T.uk.join('') + T.en.join('') + T.tailUk + T.tailEn).trim().length > 0;
 }
 function clearAll(){
-  T.uk = ['']; T.en = ['']; T.tailUk = ''; T.tailEn = '';
+  T.uk = ['']; T.en = ['']; T.ukTr = [false]; T.enTr = [false];
+  T.tailUk = ''; T.tailEn = ''; T.tailUkTr = false; T.tailEnTr = false;
   el.en.textContent = ''; el.uk.textContent = '';
 }
 
@@ -385,11 +432,13 @@ function handleMessage(m){
     for (var i = 0; i < m.tokens.length; i++){
       var t = m.tokens[i], txt = t.text || '';
       if (txt === '<end>' || txt === '<fin>') continue;
-      var st = t.translation_status;
-      var isEn = st === 'translation' || (st === 'none' && t.language === 'en');
-      if (t.is_final) append(isEn ? 'en' : 'uk', txt);
-      else if (isEn) T.tailEn += txt;
-      else T.tailUk += txt;
+      // Every token carries its language, so text goes to the pane of its own language, spoken or translated.
+      var isTr = t.translation_status === 'translation';
+      var lang = String(t.language || '').slice(0, 2).toLowerCase();
+      if (lang !== 'en' && lang !== 'uk') lang = isTr ? modeTarget() : modeSource(); // no usable tag: translated text goes to the target language, spoken text to the source
+      if (t.is_final) append(lang, txt, isTr);
+      else if (lang === 'en'){ if (!T.tailEn) T.tailEnTr = isTr; T.tailEn += txt; }
+      else { if (!T.tailUk) T.tailUkTr = isTr; T.tailUk += txt; }
     }
     scheduleRender();
   }
@@ -400,7 +449,8 @@ function explain(code, type, message){
   if (code === 401 || code === 403) base = 'Soniox rejected the API key. Open Settings, paste the key again, and press Check connection.';
   else if (code === 402) base = 'Soniox says the credit or monthly budget is used up. Add credit or raise the limit in the Soniox console.';
   else if (code === 429) base = 'Soniox says too many streams are open on this account. Close other copies of this page, or wait a minute.';
-  else if (code === 400) base = 'Soniox rejected the request settings. Check the model name and language hints in Settings.';
+  else if (code === 400) base = 'Soniox rejected the request settings. Check the model name and language hints in Settings.' +
+    (S.mode === 'both' ? ' If this started after choosing Both ways, open More and set Direction back to Ukr to Eng, then try again.' : '');
   else base = 'Soniox reported an error (' + code + ').';
   return base + (message ? ' Details: ' + message : '') + (type ? ' [' + type + ']' : '');
 }
@@ -504,16 +554,27 @@ function flushQueue(){
 function getKey(){ return el.key.value.trim(); }
 function getHints(){
   var h = (el.hints.value || DEFAULT_HINTS).split(',').map(function(s){ return s.trim(); }).filter(Boolean);
-  return h.length ? h : ['uk'];
+  if (!h.length) h = ['uk'];
+  // when English is spoken too, both languages must be listed as hints
+  if (S.mode !== 'uk-en') ['en', 'uk'].forEach(function(l){ if (h.indexOf(l) < 0) h.push(l); });
+  return h;
 }
 function buildConfig(){
-  return {
+  var cfg = {
     model: el.model.value.trim() || DEFAULT_MODEL,
     audio_format: 'pcm_s16le', sample_rate: 16000, num_channels: 1,
     language_hints: getHints(),
-    translation: { type:'one_way', target_language:'en' },
     enable_endpoint_detection: true, max_endpoint_delay_ms: 2000
   };
+  if (S.mode === 'both'){
+    cfg.translation = { type:'two_way', language_a:'uk', language_b:'en' };
+    cfg.enable_language_identification = true;
+  } else if (S.mode === 'en-uk'){
+    cfg.translation = { type:'one_way', target_language:'uk' };
+  } else {
+    cfg.translation = { type:'one_way', target_language:'en' };
+  }
+  return cfg;
 }
 function openSocket(mode, key){
   return mode === 'protocol' ? new WebSocket(WS_URL, ['soniox-api-key', key]) : new WebSocket(WS_URL);
@@ -722,12 +783,15 @@ var DEMO = [
   ['Будь ласка, відкрийте свої нотатки та дайте відповідь на запитання на екрані.', 'Please open your notes and answer the question on the screen.'],
   ['Перший крок розвідувального циклу: планування та керівництво.', 'The first step of the intelligence cycle is planning and direction.']
 ];
-function demoMessages(pair){
+function demoMessages(pair, spoken){
+  // spoken = the language the demo speaker uses; the other language arrives as machine translation
   var wordsOf = function(s){ return s.split(' ').map(function(w, i){ return (i ? ' ' : '') + w; }); };
-  var U = wordsOf(pair[0]), E = wordsOf(pair[1]);
+  var enSpoken = spoken === 'en';
+  var U = wordsOf(enSpoken ? pair[1] : pair[0]), E = wordsOf(enSpoken ? pair[0] : pair[1]);
+  var origLang = enSpoken ? 'en' : 'uk', trLang = enSpoken ? 'uk' : 'en';
   var fu = 0, fe = 0, out = [];
   var tok = function(text, fin, tr){
-    return { text:text, is_final:fin, translation_status: tr ? 'translation' : 'original', language: tr ? 'en' : 'uk' };
+    return { text:text, is_final:fin, translation_status: tr ? 'translation' : 'original', language: tr ? trLang : origLang };
   };
   var maxN = Math.max(U.length, E.length);
   for (var k = 1; k <= maxN + 3; k++){
@@ -752,7 +816,9 @@ async function runDemo(){
   showBanner('Demo mode: simulated text only. No microphone, no internet, not a real translation.', 'info');
   el.cost.textContent = ''; startTimer();
   for (var p = 0; p < DEMO.length; p++){
-    var msgs = demoMessages(DEMO[p]);
+    // the demo speaks the language that matches the chosen direction; in Both ways it alternates so both panes fill
+    var spoken = S.mode === 'en-uk' ? 'en' : (S.mode === 'both' ? (p % 2 ? 'en' : 'uk') : 'uk');
+    var msgs = demoMessages(DEMO[p], spoken);
     for (var i = 0; i < msgs.length; i++){
       if (!S.demo) return;
       handleMessage(msgs[i]); await sleep(260);
@@ -781,12 +847,14 @@ async function deliver(name, body){
 function saveTranscript(){
   if (!hasText()){ showBanner('Nothing to save yet.', 'info'); return; }
   var d = new Date();
-  var en = T.en.slice(); en[en.length - 1] += T.tailEn;
-  var uk = T.uk.slice(); uk[uk.length - 1] += T.tailUk;
-  var clean = function(a){ return a.map(function(s){ return s.trim(); }).filter(Boolean).join('\n'); };
-  var body = 'Live Translator transcript\nSaved: ' + d.toLocaleString() +
+  var side = function(lang){
+    var arr = T[lang].slice(), fl = T[lang + 'Tr'];
+    arr[arr.length - 1] += (lang === 'en' ? T.tailEn : T.tailUk);
+    return arr.map(function(s, i){ s = s.trim(); return (s && S.mode === 'both' && fl[i]) ? '[translated] ' + s : s; }).filter(Boolean).join('\n');
+  };
+  var body = 'Live Translator transcript\nSaved: ' + d.toLocaleString() + '\nDirection: ' + MODES[S.mode].title +
     '\nNote: machine translation, not an official translation.\n\n' +
-    'ENGLISH\n' + clean(en) + '\n\nUKRAINIAN\n' + clean(uk) + '\n';
+    'ENGLISH\n' + side('en') + '\n\nUKRAINIAN\n' + side('uk') + '\n';
   var name = 'translation-' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + '-' + pad(d.getHours()) + pad(d.getMinutes()) + '.txt';
   deliver(name, body);
 }
@@ -824,7 +892,32 @@ el.clear.addEventListener('click', function(){
 el.save.addEventListener('click', function(){ closeDialog(el.more); saveTranscript(); });
 el.fsDown.addEventListener('click', function(){ setFont(curFont() - 4); });
 el.fsUp.addEventListener('click', function(){ setFont(curFont() + 4); });
-el.showUk.addEventListener('change', function(){ el.paneUk.hidden = !el.showUk.checked; store.set('showUk', el.showUk.checked ? '1' : '0'); });
+function applyMode(){
+  var m = MODES[S.mode];
+  el.modeTitle.textContent = m.title;
+  el.enLabel.textContent = m.en; el.ukLabel.textContent = m.uk;
+  el.modeHint.textContent = m.hint;
+  el.panes.classList.toggle('both', S.mode === 'both');
+  el.modeBtns.forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.mode === S.mode ? 'true' : 'false'); });
+}
+function setSwap(on){ document.body.classList.toggle('swap', on); store.set('swap', on ? '1' : '0'); }
+function setMode(mode){
+  if (S.running){ showBanner('Stop first, then change the direction.', 'info'); return; }
+  if (!MODES[mode]) return;
+  S.mode = mode; store.set('mode', mode); applyMode();
+  if (MODES[mode].swap !== null) setSwap(MODES[mode].swap); // the translated language is shown large by default
+}
+function applyPanes(){
+  var en = el.showEn.checked, uk = el.showUk.checked;
+  el.paneEn.hidden = !en; el.paneUk.hidden = !uk;
+  el.panes.classList.toggle('solo-en', en && !uk);
+  el.panes.classList.toggle('solo-uk', uk && !en);
+  store.set('showEn', en ? '1' : '0'); store.set('showUk', uk ? '1' : '0');
+}
+el.modeBtns.forEach(function(b){ b.addEventListener('click', function(){ setMode(b.dataset.mode); }); });
+el.showEn.addEventListener('change', function(){ if (!el.showEn.checked && !el.showUk.checked) el.showUk.checked = true; applyPanes(); });
+el.showUk.addEventListener('change', function(){ if (!el.showUk.checked && !el.showEn.checked) el.showEn.checked = true; applyPanes(); });
+el.swapBtn.addEventListener('click', function(){ closeDialog(el.more); setSwap(!document.body.classList.contains('swap')); });
 el.layout.addEventListener('click', function(){
   var side = el.panes.classList.toggle('side');
   el.layout.textContent = side ? 'Stacked' : 'Side by side';
@@ -883,7 +976,14 @@ if (navigator.mediaDevices && navigator.mediaDevices.addEventListener)
 (function init(){
   var th = store.get('theme', ''); if (th) root.dataset.theme = th;
   var fs = parseInt(store.get('fs', ''), 10); if (fs) setFont(fs);
-  if (store.get('showUk', '1') === '0'){ el.showUk.checked = false; el.paneUk.hidden = true; }
+  var savedMode = store.get('mode', 'uk-en'); S.mode = MODES[savedMode] ? savedMode : 'uk-en';
+  applyMode();
+  var swapPref = store.get('swap', '');
+  if (swapPref === '1' || (swapPref === '' && MODES[S.mode].swap === true)) document.body.classList.add('swap');
+  if (store.get('showEn', '1') === '0') el.showEn.checked = false;
+  if (store.get('showUk', '1') === '0') el.showUk.checked = false;
+  if (!el.showEn.checked && !el.showUk.checked) el.showEn.checked = true;
+  applyPanes();
   var sidePref = store.get('side', '');
   var side = sidePref === '' ? window.innerWidth >= 1000 : sidePref === '1';
   if (side){ el.panes.classList.add('side'); el.layout.textContent = 'Stacked'; }
