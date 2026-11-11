@@ -165,6 +165,26 @@ html.flip #cleanBar{top:calc(10px + env(safe-area-inset-bottom)); right:calc(14p
 html.flip dialog{transform:rotate(180deg)}
 html.flip dialog.sheet{margin:calc(10px + env(safe-area-inset-top)) auto auto}
 @media (min-width:700px){ html.flip dialog.sheet{margin:auto} }
+/* subtitle style: the newest line sits at the bottom of the pane and older lines fade out above it, like TV subtitles */
+body.subs .text{display:flex; flex-direction:column; -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 26%); mask-image:linear-gradient(to bottom,transparent 0,#000 26%)}
+body.subs .text:empty{-webkit-mask-image:none; mask-image:none}
+body.subs .text > p:first-child{margin-top:auto}
+.pane{position:relative}
+.jump{position:absolute; right:12px; bottom:12px; min-height:40px; padding:6px 14px; font-size:15px; z-index:2; box-shadow:0 2px 10px rgba(0,0,0,.3)}
+#hearing{color:var(--muted); font-size:13px; white-space:nowrap}
+#hearing[hidden]{display:none}
+.bbtns{display:flex; gap:8px; flex:none}
+.setups{display:flex; gap:8px; margin:0 0 12px}
+.setups select{flex:1; min-width:0}
+.setups button{padding:8px 14px}
+.field textarea{font:inherit; font-size:16px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:var(--bg); color:var(--ink); min-height:96px; width:100%; resize:vertical}
+/* gentle polish: press feedback, soft fades, nothing at all for people who ask for less motion */
+button{transition:background-color .15s, border-color .15s, opacity .15s, transform .08s}
+button:active:not(:disabled){transform:scale(.97)}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+dialog[open], dialog[open]::backdrop{animation:fadein .16s ease-out}
+.text p{animation:fadein .3s ease-out}
+@media (prefers-reduced-motion: reduce){ *, *::before, *::after{animation:none !important; transition:none !important} }
 #checkResult{font-size:15px; margin-top:10px; min-height:1.3em; line-height:1.4}
 #checkDetails{font:12px/1.45 Consolas,Menlo,monospace; white-space:pre-wrap; word-break:break-word; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:8px 10px; margin:8px 0 0; user-select:all; -webkit-user-select:all; max-height:200px; overflow:auto}
 #checkDetails[hidden]{display:none}
@@ -187,21 +207,24 @@ a{color:var(--accent)}
     <span id="meter" title="Microphone level"><i></i></span>
     <span id="dot" class="idle"></span>
     <span id="statusText">Idle</span>
+    <span id="hearing" hidden></span>
     <span id="timer">00:00:00</span>
     <span id="cost"></span>
   </div>
 </header>
 
-<div id="banner" hidden role="alert"><span id="bannerText"></span><button id="bannerClose" aria-label="Dismiss">Dismiss</button></div>
+<div id="banner" hidden role="alert"><span id="bannerText"></span><div class="bbtns"><button id="bannerAction" hidden></button><button id="bannerClose" aria-label="Dismiss">Dismiss</button></div></div>
 
 <main id="panes">
   <section class="pane" id="paneEn">
     <div class="label"><span id="enLabel">English (machine translation)</span><span class="legend"> (bar = machine translation)</span></div>
     <div class="text" id="enText" data-empty="English will appear here when you tap Start."></div>
+    <button class="jump" id="jumpEn" hidden>Latest</button>
   </section>
   <section class="pane" id="paneUk">
     <div class="label"><span id="ukLabel">Ukrainian (what the speaker said)</span><span class="legend"> (bar = machine translation)</span></div>
     <div class="text" id="ukText" data-empty="Ukrainian text will appear here."></div>
+    <button class="jump" id="jumpUk" hidden>Latest</button>
   </section>
 </main>
 
@@ -236,6 +259,12 @@ a{color:var(--accent)}
     <button id="modeEnUk" data-mode="ba" aria-pressed="false">Eng to Ukr</button>
   </div>
   <div class="hint" id="modeHint" style="margin-bottom:12px"></div>
+  <div class="field-label" id="setupLabel">Setups (stop first to switch)</div>
+  <div class="setups" role="group" aria-labelledby="setupLabel">
+    <select id="setupSel" aria-label="Saved setups"><option value="">Choose a setup...</option></select>
+    <button id="setupSave" title="Save the current languages, direction, panes, layout and text size under a name">Save</button>
+    <button id="setupDel" disabled>Delete</button>
+  </div>
   <div class="field">
     <label for="micSel">Microphone</label>
     <select id="micSel"><option value="">Default microphone</option></select>
@@ -283,6 +312,12 @@ a{color:var(--accent)}
     <label for="hintsInput">Extra language hints (optional)</label>
     <input type="text" id="hintsInput" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="for example: de">
     <div class="hint">The two languages you picked are always included. Add other language codes, separated by commas, only if a third language is also spoken.</div>
+  </div>
+  <div class="field">
+    <label for="glossInput">Glossary (optional)</label>
+    <textarea id="glossInput" rows="4" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="IITC&#10;collection plan = план збору"></textarea>
+    <div class="hint">One entry per line. A word or name on its own helps Soniox recognize and spell it. Write <b>source = target</b> to fix how a term is translated. Lines starting with # are ignored. It stays on this device and is sent to Soniox with your audio, so keep classified or controlled terms out of it.</div>
+    <div class="hint" id="glossCount"></div>
   </div>
   <div class="row">
     <button id="checkBtn">Check connection</button>
@@ -339,7 +374,9 @@ var el = {
   langA: $('langA'), langB: $('langB'), showEnText: $('showEnText'), showUkText: $('showUkText'),
   rememberRow: $('rememberRow'), remember: $('rememberKey'), forget: $('forgetKey'), keyHint: $('keyHint'),
   unclean: $('unclean'), dlg: $('settings'), key: $('keyInput'), showKey: $('showKey'),
-  model: $('modelInput'), hints: $('hintsInput'),
+  model: $('modelInput'), hints: $('hintsInput'), gloss: $('glossInput'), glossCount: $('glossCount'),
+  hearing: $('hearing'), bannerAction: $('bannerAction'), bannerFn: null,
+  setupSel: $('setupSel'), setupSave: $('setupSave'), setupDel: $('setupDel'),
   check: $('checkBtn'), saveSettings: $('saveSettings'), closeSettings: $('closeSettings'),
   checkResult: $('checkResult'), checkDetails: $('checkDetails')
 };
@@ -416,11 +453,12 @@ function scrub(s){
   if (k.length >= 6) s = s.split(k).join('[key hidden]');
   return s;
 }
-function showBanner(msg, kind, tip){
+function showBanner(msg, kind, tip, action){
   el.bannerText.textContent = scrub(msg); el.banner.className = kind || ''; el.banner.hidden = false;
   if (tip) el.banner.dataset.tip = '1'; else delete el.banner.dataset.tip;
+  el.bannerAction.hidden = !action; el.bannerAction.textContent = action ? action.label : ''; el.bannerFn = action ? action.fn : null;
 }
-function hideBanner(){ el.banner.hidden = true; delete el.banner.dataset.tip; }
+function hideBanner(){ el.banner.hidden = true; el.bannerAction.hidden = true; el.bannerFn = null; delete el.banner.dataset.tip; }
 function ui(){
   el.start.textContent = S.demo ? 'Stop demo' : ((S.running) ? 'Stop' : 'Start');
   el.start.classList.toggle('danger', S.running);
@@ -491,6 +529,18 @@ function clearAll(){
   T.uk = ['']; T.en = ['']; T.ukTr = [false]; T.enTr = [false];
   T.tailUk = ''; T.tailEn = ''; T.tailUkTr = false; T.tailEnTr = false;
   el.en.textContent = ''; el.uk.textContent = '';
+  $('jumpEn').hidden = true; $('jumpUk').hidden = true;
+}
+// Both ways: which language the speaker is using right now
+function setHearing(code){
+  var n = langName(code);
+  if (!n || !S.running) return;
+  el.hearing.textContent = 'hearing ' + n; el.hearing.hidden = false;
+}
+// "Latest" appears on a pane that has been scrolled away from the newest text
+function wireJump(box, btn){
+  box.addEventListener('scroll', function(){ btn.hidden = !(box.scrollHeight - box.scrollTop - box.clientHeight > 140); });
+  btn.addEventListener('click', function(){ box.scrollTop = box.scrollHeight; btn.hidden = true; });
 }
 
 /* ---------- server message handling ---------- */
@@ -506,6 +556,7 @@ function handleMessage(m){
       var isTr = t.translation_status === 'translation';
       var code = String(t.language || '').toLowerCase().split(/[-_]/)[0];
       var lang = code === S.langA ? 'uk' : (code === S.langB ? 'en' : (isTr ? modeTarget() : modeSource())); // no usable tag: translated text goes to the target language, spoken text to the source
+      if (!isTr && S.mode === 'both' && langName(code)) setHearing(code);
       if (t.is_final) append(lang, txt, isTr);
       else if (lang === 'en'){ if (!T.tailEn) T.tailEnTr = isTr; T.tailEn += txt; }
       else { if (!T.tailUk) T.tailUkTr = isTr; T.tailUk += txt; }
@@ -519,7 +570,7 @@ function explain(code, type, message){
   if (code === 401 || code === 403) base = 'Soniox rejected the API key. Open Settings, paste the key again, and press Check connection.';
   else if (code === 402) base = 'Soniox says the credit or monthly budget is used up. Add credit or raise the limit in the Soniox console.';
   else if (code === 429) base = 'Soniox says too many streams are open on this account. Close other copies of this page, or wait a minute.';
-  else if (code === 400) base = 'Soniox rejected the request settings. Check the model name and language hints in Settings.' +
+  else if (code === 400) base = 'Soniox rejected the request settings. Check the model name, language hints and glossary in Settings.' +
     (S.mode === 'both' ? ' If this started after choosing Both ways or new languages, open More and set Direction to ' + MODES.ab.btn + ' (or pick Ukrainian and English), then try again.' : '');
   else base = 'Soniox reported an error (' + code + ').';
   return base + (message ? ' Details: ' + message : '') + (type ? ' [' + type + ']' : '');
@@ -643,6 +694,29 @@ function getHints(){
   (el.hints.value || '').split(',').forEach(function(s){ s = s.trim().toLowerCase(); if (s && h.indexOf(s) < 0) h.push(s); });
   return h;
 }
+/* Glossary: one entry per line. "word" helps recognition and spelling (Soniox context.terms); "source = target" also fixes how a term
+   is translated (context.translation_terms). Soniox allows about 10,000 characters of context; we stop at 9,000. */
+var GLOSS_MAX = 9000, SAVE_PROMPT_SECS = 20;
+function parseGlossary(text){
+  var terms = [], pairs = [], seen = {}, used = 0, over = false;
+  String(text || '').split(/\r?\n/).forEach(function(line){
+    line = line.trim();
+    if (!line || line.charAt(0) === '#') return;
+    var k = line.indexOf('=');
+    var src = (k > 0 ? line.slice(0, k) : line).trim(), dst = k > 0 ? line.slice(k + 1).trim() : '';
+    if (!src) return;
+    var cost = src.length + dst.length + 2;
+    if (used + cost > GLOSS_MAX){ over = true; return; }
+    used += cost;
+    if (!seen['t:' + src]){ seen['t:' + src] = 1; terms.push(src); }
+    if (dst && !seen['x:' + src + '=' + dst]){ seen['x:' + src + '=' + dst] = 1; pairs.push({ source: src, target: dst }); }
+  });
+  return { terms: terms, translation_terms: pairs, chars: used, over: over };
+}
+function updateGlossCount(){
+  var g = parseGlossary(el.gloss.value), n = g.terms.length;
+  el.glossCount.textContent = n ? (n + (n === 1 ? ' entry' : ' entries') + ', ' + g.chars + ' of 9,000 characters used.' + (g.over ? ' Some lines did not fit and will be ignored.' : '')) : '';
+}
 function buildConfig(){
   var cfg = {
     model: el.model.value.trim() || DEFAULT_MODEL,
@@ -650,6 +724,10 @@ function buildConfig(){
     language_hints: getHints(),
     enable_endpoint_detection: true, max_endpoint_delay_ms: 2000
   };
+  var g = parseGlossary(el.gloss.value), ctx = {};
+  if (g.terms.length) ctx.terms = g.terms;
+  if (g.translation_terms.length) ctx.translation_terms = g.translation_terms;
+  if (ctx.terms || ctx.translation_terms) cfg.context = ctx;
   if (S.mode === 'both'){
     cfg.translation = { type:'two_way', language_a:S.langA, language_b:S.langB };
     cfg.enable_language_identification = true;
@@ -742,7 +820,7 @@ async function start(){
     store.set('ack', '1');
   }
   S.running = true; S.stopping = false; S.fatal = false; S.demo = false; S.noAudio = false;
-  S.queue = []; S.reconnects = 0; S.everOpened = false; S.triedLegacy = false;
+  S.queue = []; S.reconnects = 0; S.everOpened = false; S.triedLegacy = false; S.t0 = 0;
   var run = S.runId = (S.runId || 0) + 1; // lets a Stop tapped while the microphone is still starting cancel this start
   ui(); setStatus('connecting', 'Starting microphone...');
   try{ await startAudio(); }
@@ -757,6 +835,7 @@ function teardown(kind){
   var ws = S.ws; S.ws = null;
   if (ws){ try{ ws.close(); }catch(e){} }
   S.running = false; S.stopping = false; S.demo = false; S.ready = false; S.queue = []; S.stopResolve = null; S.noAudio = false;
+  el.hearing.hidden = true;
   promoteTails();
   setStatus(kind === 'error' ? 'error' : 'idle', kind === 'error' ? 'Stopped (error)' : 'Idle');
   ui();
@@ -780,7 +859,10 @@ async function stop(){
       S.stopResolve = function(){ clearTimeout(t); res(); };
     });
   }
+  var secs = S.t0 ? (performance.now() - S.t0) / 1000 : 0; // S.t0 is 0 until the microphone has actually started
   teardown('idle');
+  // after a real session, offer to save what was said (not for a few seconds of testing)
+  if (secs >= SAVE_PROMPT_SECS && hasText()) showBanner('Session ended. Save the transcript?', 'info', false, { label: 'Save', fn: saveTranscript });
 }
 
 /* ---------- connection check (Settings) ---------- */
@@ -1033,6 +1115,40 @@ function applyPanes(){
   el.panes.classList.toggle('solo-en', en && !uk);
   el.panes.classList.toggle('solo-uk', uk && !en);
   store.set('showEn', en ? '1' : '0'); store.set('showUk', uk ? '1' : '0');
+  if (en && uk && document.body.classList.contains('subs')) setSubs(false); // the subtitle style belongs to the one-language view
+}
+function setSubs(on){ document.body.classList.toggle('subs', on); store.set('subs', on ? '1' : '0'); }
+
+/* ---------- saved setups ---------- */
+var SETUP_MAX = 8, SETUP_PREV = 'Before subtitles';
+function getSetups(){ try{ var o = JSON.parse(store.get('setups', '{}')); return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {}; }catch(e){ return {}; } }
+function putSetups(o, keep){ store.set('setups', JSON.stringify(o)); refreshSetups(keep); }
+function currentSetup(){
+  return { a:S.langA, b:S.langB, mode:S.mode, swap:document.body.classList.contains('swap'), showEn:el.showEn.checked, showUk:el.showUk.checked,
+    side:el.panes.classList.contains('side'), subs:document.body.classList.contains('subs'), fs:curFont() };
+}
+function refreshSetups(keep){
+  var o = getSetups(), sel = el.setupSel;
+  sel.innerHTML = ''; sel.add(new Option('Choose a setup...', ''));
+  Object.keys(o).forEach(function(n){ sel.add(new Option(n, n)); });
+  sel.value = (keep && o[keep]) ? keep : '';
+  el.setupDel.disabled = !sel.value;
+}
+function applySetup(s){
+  if (S.running){ showBanner('Stop first, then switch setups.', 'info'); return false; }
+  if (!s || !langName(s.a) || !langName(s.b) || s.a === s.b || !MODES[s.mode]) return false;
+  if (s.a !== S.langA || s.b !== S.langB){
+    setLanguages(s.a, s.b); // asks before clearing text; if you say no, the languages stay and so does everything else
+    if (S.langA !== s.a || S.langB !== s.b) return false;
+  }
+  S.mode = s.mode; store.set('mode', s.mode); applyMode(); setSwap(!!s.swap);
+  el.showEn.checked = !!s.showEn; el.showUk.checked = !!s.showUk;
+  if (!el.showEn.checked && !el.showUk.checked) el.showEn.checked = true;
+  applyPanes();
+  el.panes.classList.toggle('side', !!s.side); el.layout.textContent = s.side ? 'Stacked' : 'Side by side'; store.set('side', s.side ? '1' : '0');
+  setSubs(!!s.subs && !(el.showEn.checked && el.showUk.checked));
+  if (s.fs) setFont(s.fs);
+  return true;
 }
 el.modeBtns.forEach(function(b){ b.addEventListener('click', function(){ setMode(b.dataset.mode); }); });
 el.showEn.addEventListener('change', function(){ if (!el.showEn.checked && !el.showUk.checked) el.showUk.checked = true; applyPanes(); });
@@ -1058,14 +1174,37 @@ el.cleanStart.addEventListener('click', function(){ el.start.click(); });
 function subtitlesView(){
   closeDialog(el.more);
   if (S.running || S.demo){ showBanner('Stop first, then switch to subtitles.', 'info'); return; }
+  if (!document.body.classList.contains('subs')){ var o = getSetups(); o[SETUP_PREV] = currentSetup(); putSetups(o); } // so you can come back
   setMode('ba');
   el.showEn.checked = false; el.showUk.checked = true; applyPanes();
+  setSubs(true);
   setFont(Math.max(curFont(), Math.round(Math.max(36, Math.min(90, window.innerWidth / 16)))));
   setClean(true);
-  showBanner('Subtitles view. Tap Start (top right), then speak ' + langName(S.langB) + '. ' + langName(S.langA) + ' appears large. Tap Show controls to leave.' +
+  showBanner('Subtitles view. Tap Start (top right), then speak ' + langName(S.langB) + '. ' + langName(S.langA) + ' appears large. To go back later: Show controls, More, Setups, ' + SETUP_PREV + '.' +
     (window.innerHeight > window.innerWidth ? ' Turning the device sideways makes the text bigger.' : ''), 'info');
 }
 el.subs.addEventListener('click', subtitlesView);
+el.setupSel.addEventListener('change', function(){
+  var n = el.setupSel.value; el.setupDel.disabled = !n;
+  if (!n) return;
+  if (applySetup(getSetups()[n])) closeDialog(el.more); else refreshSetups();
+});
+el.setupSave.addEventListener('click', function(){
+  var n = prompt('Name this setup (it saves the languages, direction, panes, layout and text size):', '');
+  n = (n || '').trim().slice(0, 24);
+  if (!n) return;
+  var o = getSetups();
+  if (!o[n] && Object.keys(o).length >= SETUP_MAX){ showBanner('You can keep up to ' + SETUP_MAX + ' setups. Delete one first.', 'info'); return; }
+  o[n] = currentSetup(); putSetups(o, n);
+});
+el.setupDel.addEventListener('click', function(){
+  var n = el.setupSel.value; if (!n) return;
+  if (!confirm('Delete the setup "' + n + '"?')) return;
+  var o = getSetups(); delete o[n]; putSetups(o);
+});
+wireJump(el.en, $('jumpEn')); wireJump(el.uk, $('jumpUk'));
+el.bannerAction.addEventListener('click', function(){ var f = el.bannerFn; hideBanner(); if (f) f(); });
+el.gloss.addEventListener('input', updateGlossCount);
 el.clean.addEventListener('click', function(){ setClean(true); });
 el.clean2.addEventListener('click', function(){ closeDialog(el.more); setClean(true); });
 el.unclean.addEventListener('click', function(){ setClean(false); });
@@ -1103,6 +1242,7 @@ el.check.addEventListener('click', checkConnection);
 el.saveSettings.addEventListener('click', function(){
   store.set('model', el.model.value.trim() || DEFAULT_MODEL);
   store.set('hints2', el.hints.value.trim());
+  store.set('gloss', el.gloss.value);
   el.checkResult.textContent = 'Saved.';
   setTimeout(function(){ closeDialog(el.dlg); }, 500);
 });
@@ -1157,6 +1297,9 @@ if (navigator.mediaDevices && navigator.mediaDevices.addEventListener)
   el.model.value = store.get('model', DEFAULT_MODEL);
   store.del('hints'); // the old hints box held "uk,en"; the chosen languages now supply those
   el.hints.value = store.get('hints2', '');
+  el.gloss.value = store.get('gloss', ''); updateGlossCount();
+  refreshSetups();
+  if (store.get('subs', '') === '1' && !(el.showEn.checked && el.showUk.checked)) document.body.classList.add('subs');
   ui(); refreshMics();
   if (location.protocol === 'file:' && isIOS())
     showBanner('This copy was opened from a saved file. On iPhone and iPad, live translation only works from the web address. Open the hosted link instead.', 'error');
