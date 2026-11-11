@@ -133,6 +133,7 @@ label.chk input{width:22px; height:22px; flex:none}
 .seg button:last-child{border-radius:0 12px 12px 0}
 .seg button[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:700; position:relative}
 .checks{display:grid; grid-template-columns:1fr 1fr; gap:0 10px; margin-bottom:2px}
+.sr-only{position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; pointer-events:none; left:0; top:0}
 .langs{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 0 12px}
 .lang span{display:block; font-size:14px; color:var(--muted); margin-bottom:4px}
 .lang select{width:100%}
@@ -224,13 +225,16 @@ a{color:var(--accent)}
 
 <dialog id="settings" tabindex="-1">
   <h2>Settings</h2>
+  <form id="keyForm" autocomplete="on">
   <div class="field">
     <label for="keyInput">Soniox API key</label>
-    <input type="password" id="keyInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Paste your key here">
+    <input type="text" id="keyUser" name="username" autocomplete="username" value="Soniox API key" class="sr-only" tabindex="-1" aria-hidden="true">
+    <input type="password" id="keyInput" name="password" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Paste your key here">
     <label class="chk"><input type="checkbox" id="showKey"> Show key</label>
-    <div class="hint">The key stays in this page's memory for this session only. It is never saved on the device or on the website, and it goes only to Soniox. You paste it again after closing the app. Keep it in a password manager.</div>
+    <div class="hint">This page never saves the key. It keeps it in memory for this session only and sends it only to Soniox. To avoid pasting it each time, save it in your iPhone's Passwords app for this website (Settings, Passwords), then tap the box above and pick it with Face ID.</div>
     <div class="hint">Get a key at <a href="https://console.soniox.com" target="_blank" rel="noopener noreferrer">console.soniox.com</a>. Use your own key. Do not email keys around.</div>
   </div>
+  </form>
   <div class="field">
     <label for="modelInput">Model</label>
     <input type="text" id="modelInput" autocapitalize="off" autocorrect="off" spellcheck="false">
@@ -1009,6 +1013,8 @@ el.settingsBtn.addEventListener('click', openSettings);
 el.closeSettings.addEventListener('click', function(){ closeDialog(el.dlg); });
 outsideClick(el.more); outsideClick(el.dlg);
 el.showKey.addEventListener('change', function(){ el.key.type = el.showKey.checked ? 'text' : 'password'; });
+// The key box sits in a form only so the iPhone Passwords app can fill it. Nothing is ever submitted anywhere.
+$('keyForm').addEventListener('submit', function(e){ e.preventDefault(); });
 el.check.addEventListener('click', checkConnection);
 el.saveSettings.addEventListener('click', function(){
   store.set('model', el.model.value.trim() || DEFAULT_MODEL);
