@@ -144,6 +144,21 @@ label.chk[hidden]{display:none}
 /* Home Screen app on a newer iPhone: iOS fades whatever sits right under the status bar, so start lower */
 body.standalone{padding-top:calc(30px + env(safe-area-inset-top))}
 @media (display-mode: standalone){ body{padding-top:calc(30px + env(safe-area-inset-top))} }
+.grid button.on{background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:700}
+/* Upside down: the whole page turns 180 degrees so the phone can be held with its bottom edge (and bottom microphone) toward the speaker.
+   The notch and home-indicator margins swap sides, and the sheets open at the edge nearest your thumb. */
+html.flip body{
+  transform:rotate(180deg);
+  padding:calc(8px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left)) 0 calc(12px + env(safe-area-inset-right));
+}
+html.flip #dock{padding-bottom:calc(8px + env(safe-area-inset-top))}
+html.flip body.standalone #dock{padding-bottom:calc(30px + env(safe-area-inset-top))}
+html.flip body.clean{padding-bottom:calc(8px + env(safe-area-inset-top))}
+html.flip body.standalone.clean{padding-bottom:calc(30px + env(safe-area-inset-top))}
+html.flip #unclean{top:calc(10px + env(safe-area-inset-bottom)); right:calc(14px + env(safe-area-inset-left))}
+html.flip dialog{transform:rotate(180deg)}
+html.flip dialog.sheet{margin:calc(10px + env(safe-area-inset-top)) auto auto}
+@media (min-width:700px){ html.flip dialog.sheet{margin:auto} }
 #checkResult{font-size:15px; margin-top:10px; min-height:1.3em; line-height:1.4}
 #checkDetails{font:12px/1.45 Consolas,Menlo,monospace; white-space:pre-wrap; word-break:break-word; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:8px 10px; margin:8px 0 0; user-select:all; -webkit-user-select:all; max-height:200px; overflow:auto}
 #checkDetails[hidden]{display:none}
@@ -228,6 +243,7 @@ a{color:var(--accent)}
     <button id="demoBtn" title="Shows sample text so you can see the layout. No microphone or internet needed.">Demo</button>
     <button id="saveBtn">Save transcript</button>
     <button id="settingsBtn">Settings</button>
+    <button id="flipBtn" aria-pressed="false" title="Turns the screen upside down, so you can hold the phone with its bottom edge toward the speaker.">Upside down</button>
   </div>
   <p class="hint">While Live, microphone audio is sent over the internet to Soniox. Machine translation can be wrong; treat it as an aid, not an official translation.</p>
   <button id="closeMore" style="width:100%">Close</button>
@@ -309,7 +325,7 @@ var el = {
   banner: $('banner'), bannerText: $('bannerText'), bannerClose: $('bannerClose'),
   panes: $('panes'), paneUk: $('paneUk'), paneEn: $('paneEn'), en: $('enText'), uk: $('ukText'),
   modeTitle: $('modeTitle'), enLabel: $('enLabel'), ukLabel: $('ukLabel'), modeHint: $('modeHint'),
-  showEn: $('showEn'), swapBtn: $('swapBtn'), modeBtns: Array.prototype.slice.call(document.querySelectorAll('.seg button')),
+  showEn: $('showEn'), swapBtn: $('swapBtn'), flip: $('flipBtn'), modeBtns: Array.prototype.slice.call(document.querySelectorAll('.seg button')),
   langA: $('langA'), langB: $('langB'), showEnText: $('showEnText'), showUkText: $('showUkText'),
   rememberRow: $('rememberRow'), remember: $('rememberKey'), forget: $('forgetKey'), keyHint: $('keyHint'),
   unclean: $('unclean'), dlg: $('settings'), key: $('keyInput'), showKey: $('showKey'),
@@ -1006,6 +1022,11 @@ el.modeBtns.forEach(function(b){ b.addEventListener('click', function(){ setMode
 el.showEn.addEventListener('change', function(){ if (!el.showEn.checked && !el.showUk.checked) el.showUk.checked = true; applyPanes(); });
 el.showUk.addEventListener('change', function(){ if (!el.showUk.checked && !el.showEn.checked) el.showEn.checked = true; applyPanes(); });
 el.swapBtn.addEventListener('click', function(){ closeDialog(el.more); setSwap(!document.body.classList.contains('swap')); });
+function setFlip(on){
+  root.classList.toggle('flip', on); el.flip.classList.toggle('on', on); el.flip.setAttribute('aria-pressed', on ? 'true' : 'false');
+  store.set('flip', on ? '1' : '0');
+}
+el.flip.addEventListener('click', function(){ closeDialog(el.more); setFlip(!root.classList.contains('flip')); });
 el.layout.addEventListener('click', function(){
   var side = el.panes.classList.toggle('side');
   el.layout.textContent = side ? 'Stacked' : 'Side by side';
@@ -1070,6 +1091,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.addEventListener)
 /* ---------- init ---------- */
 (function init(){
   var th = store.get('theme', ''); if (th) root.dataset.theme = th;
+  if (store.get('flip', '') === '1') setFlip(true);
   var fs = parseInt(store.get('fs', ''), 10); if (fs) setFont(fs);
   if (navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) document.body.classList.add('standalone');
   var la = store.get('langA', DEFAULT_LANG_A), lb = store.get('langB', DEFAULT_LANG_B);
