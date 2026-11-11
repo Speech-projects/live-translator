@@ -1,0 +1,888 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Translator">
+<meta name="theme-color" content="#131110">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
+<title>Live Translator: Ukrainian to English</title>
+<style>
+:root{
+  --bg:#f6f4f0; --panel:#ffffff; --ink:#1c1917; --muted:#5f584f; --line:#ddd7ce;
+  --accent:#b45309; --accent-ink:#ffffff; --ok:#15803d; --warn:#b45309; --bad:#b91c1c;
+  --tail:#8a8178; --btn:#efeae3; --btn-ink:#1c1917;
+  --fs-en:40px; --fs-uk:24px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#131110; --panel:#1d1a18; --ink:#f3efe9; --muted:#b0a89d; --line:#37322d;
+    --accent:#e98a3c; --accent-ink:#1a1208; --tail:#8d857b; --btn:#2a2623; --btn-ink:#f3efe9;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#131110; --panel:#1d1a18; --ink:#f3efe9; --muted:#b0a89d; --line:#37322d;
+  --accent:#e98a3c; --accent-ink:#1a1208; --tail:#8d857b; --btn:#2a2623; --btn-ink:#f3efe9;
+}
+@media (max-width:600px){ :root{ --fs-en:28px; --fs-uk:17px; } }
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  height:100vh; height:100dvh;
+  display:flex; flex-direction:column; gap:8px;
+  padding:calc(8px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) 0 calc(12px + env(safe-area-inset-left));
+  -webkit-text-size-adjust:100%; overscroll-behavior:none; touch-action:manipulation;
+}
+header{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap}
+.brand{font-weight:700; font-size:17px}
+.brand span{font-weight:400; color:var(--muted); margin-left:8px}
+.status{display:flex; align-items:center; gap:9px; font-size:14px; color:var(--muted)}
+#meter{width:46px; height:8px; background:var(--line); border-radius:4px; overflow:hidden; display:inline-block}
+#meter i{display:block; height:100%; width:0; background:var(--ok); transition:width .08s}
+#dot{width:12px; height:12px; border-radius:50%; background:#9a928a; display:inline-block}
+#dot.connecting{background:var(--warn)}
+#dot.live{background:var(--ok); animation:pulse 1.6s infinite}
+#dot.error{background:var(--bad)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(21,128,61,.5)}70%{box-shadow:0 0 0 8px rgba(21,128,61,0)}100%{box-shadow:0 0 0 0 rgba(21,128,61,0)}}
+#statusText{color:var(--ink); font-weight:600}
+button, select{
+  font:inherit; font-size:16px; color:var(--btn-ink); background:var(--btn);
+  border:1px solid var(--line); border-radius:12px; padding:10px 14px; min-height:46px; cursor:pointer;
+  -webkit-appearance:none; appearance:none;
+}
+select{padding-right:30px; background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%); background-position:calc(100% - 17px) 50%, calc(100% - 12px) 50%; background-size:5px 5px,5px 5px; background-repeat:no-repeat}
+button:hover:not(:disabled){border-color:var(--accent)}
+button:disabled{opacity:.5; cursor:not-allowed}
+button[hidden]{display:none}
+button:focus-visible, select:focus-visible, input:focus-visible{outline:3px solid var(--accent); outline-offset:2px}
+button.primary{background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:700; font-size:18px}
+button.primary.danger{background:var(--bad); border-color:var(--bad); color:#fff}
+#banner{
+  border:1px solid var(--line); border-left:6px solid var(--warn); background:var(--panel);
+  border-radius:10px; padding:10px 12px; font-size:15px; line-height:1.4; display:flex; gap:12px; align-items:flex-start; justify-content:space-between;
+}
+#banner.error{border-left-color:var(--bad)}
+#banner.info{border-left-color:var(--accent)}
+#banner[hidden]{display:none}
+#banner button{min-height:36px; padding:4px 12px; font-size:14px; flex:none}
+#panes{flex:1; min-height:0; display:flex; flex-direction:column; gap:10px}
+#panes.side{flex-direction:row}
+.pane{
+  flex:1 1 0; min-height:0; min-width:0; display:flex; flex-direction:column;
+  background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:10px 16px 6px;
+}
+#paneEn{flex:3 1 0}
+#paneUk{flex:2 1 0}
+#paneUk[hidden]{display:none}
+.label{font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:4px}
+.text{flex:1; overflow:auto; min-height:0; -webkit-overflow-scrolling:touch}
+.text:empty::before{content:attr(data-empty); color:var(--tail); font-size:17px; font-weight:400}
+.text p{margin:0 0 .45em}
+.text p:empty{display:none}
+.tail{color:var(--tail)}
+#enText{font-size:var(--fs-en); line-height:1.28; font-weight:600}
+#ukText{font-size:var(--fs-uk); line-height:1.35; color:var(--muted)}
+#dock{display:flex; gap:8px; padding:2px 0 calc(8px + env(safe-area-inset-bottom)); align-items:stretch}
+#dock .primary{flex:1; min-height:54px; min-width:104px}
+#dock button:not(.primary){min-width:50px; padding:10px 12px}
+footer{display:none; font-size:12px; color:var(--muted); padding-bottom:6px}
+@media (min-width:900px){ footer{display:block} }
+body.clean header, body.clean #dock, body.clean footer{display:none}
+body.clean{padding-bottom:calc(8px + env(safe-area-inset-bottom))}
+#unclean{position:fixed; top:calc(10px + env(safe-area-inset-top)); right:calc(14px + env(safe-area-inset-right)); opacity:.45; display:none; min-height:44px}
+body.clean #unclean{display:block}
+dialog{
+  border:1px solid var(--line); border-radius:16px; background:var(--panel); color:var(--ink);
+  width:min(560px,calc(100% - 20px)); max-height:90vh; max-height:90dvh; overflow:auto; padding:18px 18px calc(18px + env(safe-area-inset-bottom));
+}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+dialog:focus{outline:none}
+dialog h2{margin:0 0 12px; font-size:19px}
+dialog.sheet{margin:auto auto calc(10px + env(safe-area-inset-bottom)); width:min(560px,calc(100% - 20px))}
+@media (min-width:700px){ dialog.sheet{margin:auto} }
+.field{display:flex; flex-direction:column; gap:5px; margin-bottom:12px}
+.field label{font-size:14px; color:var(--muted)}
+.field input[type=text], .field input[type=password], .field select{
+  font:inherit; font-size:16px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:var(--bg); color:var(--ink); min-height:46px; width:100%;
+}
+label.chk{display:flex; align-items:center; gap:10px; font-size:15px; color:var(--muted); min-height:34px}
+label.chk input{width:22px; height:22px; flex:none}
+.row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+.grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:10px 0 12px}
+.hint{font-size:13px; color:var(--muted); line-height:1.45}
+#checkResult{font-size:15px; margin-top:10px; min-height:1.3em; line-height:1.4}
+#checkDetails{font:12px/1.45 Consolas,Menlo,monospace; white-space:pre-wrap; word-break:break-word; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:8px 10px; margin:8px 0 0; user-select:all; -webkit-user-select:all; max-height:200px; overflow:auto}
+#checkDetails[hidden]{display:none}
+a{color:var(--accent)}
+@media (max-width:760px){ #panes.side{flex-direction:column} }
+@media (max-width:480px){ .brand span, #cost{display:none} #dock .optional{display:none} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Live Translator<span>Ukrainian to English</span></div>
+  <div class="status" aria-live="polite">
+    <span id="meter" title="Microphone level"><i></i></span>
+    <span id="dot" class="idle"></span>
+    <span id="statusText">Idle</span>
+    <span id="timer">00:00:00</span>
+    <span id="cost"></span>
+  </div>
+</header>
+
+<div id="banner" hidden role="alert"><span id="bannerText"></span><button id="bannerClose" aria-label="Dismiss">Dismiss</button></div>
+
+<main id="panes">
+  <section class="pane" id="paneEn">
+    <div class="label">English (machine translation)</div>
+    <div class="text" id="enText" data-empty="English will appear here when you tap Start."></div>
+  </section>
+  <section class="pane" id="paneUk">
+    <div class="label">Ukrainian (what the speaker said)</div>
+    <div class="text" id="ukText" data-empty="Ukrainian text will appear here."></div>
+  </section>
+</main>
+
+<footer>Machine translation can be wrong. Treat it as an aid, not an official translation. While Live, microphone audio is sent over the internet to Soniox.</footer>
+
+<nav id="dock" aria-label="Controls">
+  <button id="startBtn" class="primary">Start</button>
+  <button id="fsDown" aria-label="Smaller text">A-</button>
+  <button id="fsUp" aria-label="Larger text">A+</button>
+  <button id="cleanBtn" class="optional" title="Hide the controls for projecting">Clean</button>
+  <button id="moreBtn" aria-haspopup="dialog">More</button>
+</nav>
+
+<button id="unclean">Show controls</button>
+
+<dialog id="more" class="sheet" tabindex="-1">
+  <h2>Controls</h2>
+  <div class="field">
+    <label for="micSel">Microphone</label>
+    <select id="micSel"><option value="">Default microphone</option></select>
+  </div>
+  <label class="chk"><input type="checkbox" id="showUk" checked> Show Ukrainian text</label>
+  <div class="grid">
+    <button id="layoutBtn">Side by side</button>
+    <button id="themeBtn">Light / Dark</button>
+    <button id="cleanBtn2">Clean view</button>
+    <button id="fullBtn">Full screen</button>
+    <button id="demoBtn" title="Shows sample text so you can see the layout. No microphone or internet needed.">Demo</button>
+    <button id="clearBtn">Clear</button>
+    <button id="saveBtn">Save transcript</button>
+    <button id="settingsBtn">Settings</button>
+  </div>
+  <p class="hint">While Live, microphone audio is sent over the internet to Soniox. Machine translation can be wrong; treat it as an aid, not an official translation.</p>
+  <button id="closeMore" style="width:100%">Close</button>
+</dialog>
+
+<dialog id="settings" tabindex="-1">
+  <h2>Settings</h2>
+  <div class="field">
+    <label for="keyInput">Soniox API key</label>
+    <input type="password" id="keyInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Paste your key here">
+    <label class="chk"><input type="checkbox" id="showKey"> Show key</label>
+    <label class="chk"><input type="checkbox" id="rememberKey"> Remember on this device (stored in this browser, not encrypted)</label>
+    <div class="hint">Get a key at <a href="https://console.soniox.com" target="_blank" rel="noopener">console.soniox.com</a>. Use your own key. Do not email keys around.</div>
+  </div>
+  <div class="field">
+    <label for="modelInput">Model</label>
+    <input type="text" id="modelInput" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <div class="hint">Leave as is unless Soniox retires this model name.</div>
+  </div>
+  <div class="field">
+    <label for="hintsInput">Language hints (comma separated)</label>
+    <input type="text" id="hintsInput" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <div class="hint">uk,en helps when the speaker mixes in English terms. Use uk alone for pure Ukrainian.</div>
+  </div>
+  <div class="row">
+    <button id="checkBtn">Check connection</button>
+    <button id="saveSettings" class="primary" style="min-width:90px">Save</button>
+    <button id="closeSettings">Close</button>
+  </div>
+  <div id="checkResult" role="status"></div>
+  <pre id="checkDetails" hidden></pre>
+</dialog>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- constants ---------- */
+var WS_URL = 'wss://stt-rt.soniox.com/transcribe-websocket';
+var DEFAULT_MODEL = 'stt-rt-v6';
+var DEFAULT_HINTS = 'uk,en';
+var RATE_PER_HOUR = 0.18; // rough estimate shown on screen only; check Soniox pricing
+var NOTICE = 'While Live, microphone audio is sent over the internet to Soniox, a commercial speech service, for transcription and translation.\n\nDo not use it for classified, controlled, or otherwise non-releasable material, and confirm local policy before using it in class.\n\nContinue?';
+
+/* ---------- helpers ---------- */
+function $(id){ return document.getElementById(id); }
+var store = {
+  get: function(k, d){ try{ var v = localStorage.getItem('lt.' + k); return v === null ? d : v; }catch(e){ return d; } },
+  set: function(k, v){ try{ localStorage.setItem('lt.' + k, v); }catch(e){} },
+  del: function(k){ try{ localStorage.removeItem('lt.' + k); }catch(e){} }
+};
+function pad(n){ return (n < 10 ? '0' : '') + n; }
+function fmt(s){ return pad(Math.floor(s / 3600)) + ':' + pad(Math.floor(s % 3600 / 60)) + ':' + pad(s % 60); }
+function isIOS(){ return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+
+var el = {
+  dot: $('dot'), statusText: $('statusText'), timer: $('timer'), cost: $('cost'),
+  start: $('startBtn'), mic: $('micSel'), meter: $('meter').firstElementChild, demo: $('demoBtn'),
+  clear: $('clearBtn'), save: $('saveBtn'), fsDown: $('fsDown'), fsUp: $('fsUp'),
+  showUk: $('showUk'), layout: $('layoutBtn'), theme: $('themeBtn'), clean: $('cleanBtn'), clean2: $('cleanBtn2'),
+  full: $('fullBtn'), settingsBtn: $('settingsBtn'), more: $('more'), moreBtn: $('moreBtn'), closeMore: $('closeMore'),
+  banner: $('banner'), bannerText: $('bannerText'), bannerClose: $('bannerClose'),
+  panes: $('panes'), paneUk: $('paneUk'), en: $('enText'), uk: $('ukText'),
+  unclean: $('unclean'), dlg: $('settings'), key: $('keyInput'), showKey: $('showKey'),
+  remember: $('rememberKey'), model: $('modelInput'), hints: $('hintsInput'),
+  check: $('checkBtn'), saveSettings: $('saveSettings'), closeSettings: $('closeSettings'),
+  checkResult: $('checkResult'), checkDetails: $('checkDetails')
+};
+
+/* ---------- audio downsampler (also runs inside the AudioWorklet) ---------- */
+class Downsampler {
+  constructor(inRate, outRate, chunk, cb){
+    this.ratio = inRate / outRate; this.chunk = chunk; this.cb = cb;
+    this.buf = new Int16Array(chunk); this.i = 0; this.sum = 0; this.n = 0; this.phase = 0; this.peak = 0;
+  }
+  push(x){
+    for (var k = 0; k < x.length; k++){
+      this.sum += x[k]; this.n++; this.phase += 1;
+      if (this.phase >= this.ratio){
+        this.phase -= this.ratio;
+        var v = this.sum / this.n; this.sum = 0; this.n = 0;
+        if (v > 1) v = 1; else if (v < -1) v = -1;
+        var a = v < 0 ? -v : v; if (a > this.peak) this.peak = a;
+        this.buf[this.i++] = v < 0 ? v * 32768 : v * 32767;
+        if (this.i >= this.chunk){
+          var out = this.buf, lvl = this.peak;
+          this.buf = new Int16Array(this.chunk); this.i = 0; this.peak = 0;
+          this.cb(out, lvl);
+        }
+      }
+    }
+  }
+}
+function workletSource(){
+  return Downsampler.toString() + '\n' +
+  'class PCMWorklet extends AudioWorkletProcessor {\n' +
+  '  constructor(){ super(); var self = this;\n' +
+  '    this.d = new Downsampler(sampleRate, 16000, 1600, function(pcm, level){ self.port.postMessage({pcm: pcm.buffer, level: level}, [pcm.buffer]); }); }\n' +
+  '  process(inputs){ var c = inputs[0] && inputs[0][0]; if (c) this.d.push(c); return true; }\n' +
+  '}\n' +
+  "registerProcessor('pcm-worklet', PCMWorklet);";
+}
+
+/* ---------- state ---------- */
+var S = {
+  running:false, demo:false, stopping:false, fatal:false,
+  ws:null, ready:false, queue:[], reconnects:0, everOpened:false, triedLegacy:false,
+  authMode: store.get('authMode', 'protocol'),
+  stream:null, ctx:null, src:null, node:null,
+  t0:0, timerId:0, wake:null, stopResolve:null, lastChunk:0, noAudio:false
+};
+var T = { uk:[''], en:[''], tailUk:'', tailEn:'' };
+
+/* ---------- UI helpers ---------- */
+function setStatus(kind, text){ el.dot.className = kind; el.statusText.textContent = text; }
+function showBanner(msg, kind, tip){
+  el.bannerText.textContent = msg; el.banner.className = kind || ''; el.banner.hidden = false;
+  if (tip) el.banner.dataset.tip = '1'; else delete el.banner.dataset.tip;
+}
+function hideBanner(){ el.banner.hidden = true; delete el.banner.dataset.tip; }
+function ui(){
+  el.start.textContent = S.demo ? 'Stop demo' : ((S.running) ? 'Stop' : 'Start');
+  el.start.classList.toggle('danger', S.running);
+  el.demo.textContent = S.demo ? 'Stop demo' : 'Demo';
+  el.demo.disabled = S.running && !S.demo;
+}
+function meter(level){ el.meter.style.width = Math.min(100, Math.round(level * 140)) + '%'; }
+function openDialog(d){
+  try{ d.showModal(); }catch(e){ d.setAttribute('open', ''); }
+  try{ d.focus(); }catch(e){} // keep the first control from grabbing a focus ring when the sheet opens
+}
+function closeDialog(d){ try{ if (d.open) d.close(); }catch(e){ d.removeAttribute('open'); } }
+function openSettings(){ closeDialog(el.more); openDialog(el.dlg); }
+
+/* ---------- transcript model + rendering ---------- */
+function append(lang, txt){
+  var arr = T[lang], i = arr.length - 1;
+  // if the line before just ended a sentence, make sure the next word is not glued on
+  if (arr[i] && /[.?!…]["')\]»”]*$/.test(arr[i]) && /^[A-Za-zЀ-ӿ]/.test(txt)) arr[i] += ' ';
+  arr[i] += txt;
+  var cur = arr[i];
+  if (/[.?!…]["')\]»”]*\s*$/.test(txt) && cur.trim().length > 12) arr.push('');
+}
+function promoteTails(){
+  if (T.tailUk){ append('uk', T.tailUk); T.tailUk = ''; }
+  if (T.tailEn){ append('en', T.tailEn); T.tailEn = ''; }
+  scheduleRender();
+}
+function renderPane(box, paras, tail){
+  var stick = box.scrollHeight - box.scrollTop - box.clientHeight < 90;
+  while (box.children.length < paras.length) box.appendChild(document.createElement('p'));
+  var n = paras.length;
+  for (var i = Math.max(0, n - 3); i < n; i++){
+    var p = box.children[i];
+    var text = paras[i].replace(/^\s+/, '');
+    if (i === n - 1){
+      p.textContent = '';
+      if (text) p.appendChild(document.createTextNode(text));
+      if (tail){
+        var s = document.createElement('span'); s.className = 'tail';
+        s.textContent = text ? tail : tail.replace(/^\s+/, '');
+        p.appendChild(s);
+      }
+    } else {
+      p.textContent = text;
+    }
+  }
+  if (stick) box.scrollTop = box.scrollHeight;
+}
+function render(){
+  renderPane(el.en, T.en, T.tailEn);
+  renderPane(el.uk, T.uk, T.tailUk);
+}
+var renderTimer = 0; // a timer, not requestAnimationFrame, so text keeps updating if the window is covered or minimized
+function scheduleRender(){ if (!renderTimer) renderTimer = setTimeout(function(){ renderTimer = 0; render(); }, 30); }
+function hasText(){
+  return (T.uk.join('') + T.en.join('') + T.tailUk + T.tailEn).trim().length > 0;
+}
+function clearAll(){
+  T.uk = ['']; T.en = ['']; T.tailUk = ''; T.tailEn = '';
+  el.en.textContent = ''; el.uk.textContent = '';
+}
+
+/* ---------- server message handling ---------- */
+function handleMessage(m){
+  if (m.error_code){ onServerError(m); return; }
+  if (Array.isArray(m.tokens)){
+    S.reconnects = 0;
+    T.tailUk = ''; T.tailEn = '';
+    for (var i = 0; i < m.tokens.length; i++){
+      var t = m.tokens[i], txt = t.text || '';
+      if (txt === '<end>' || txt === '<fin>') continue;
+      var st = t.translation_status;
+      var isEn = st === 'translation' || (st === 'none' && t.language === 'en');
+      if (t.is_final) append(isEn ? 'en' : 'uk', txt);
+      else if (isEn) T.tailEn += txt;
+      else T.tailUk += txt;
+    }
+    scheduleRender();
+  }
+  if (m.finished && S.stopping && S.stopResolve) S.stopResolve();
+}
+function explain(code, type, message){
+  var base;
+  if (code === 401 || code === 403) base = 'Soniox rejected the API key. Open Settings, paste the key again, and press Check connection.';
+  else if (code === 402) base = 'Soniox says the credit or monthly budget is used up. Add credit or raise the limit in the Soniox console.';
+  else if (code === 429) base = 'Soniox says too many streams are open on this account. Close other copies of this page, or wait a minute.';
+  else if (code === 400) base = 'Soniox rejected the request settings. Check the model name and language hints in Settings.';
+  else base = 'Soniox reported an error (' + code + ').';
+  return base + (message ? ' Details: ' + message : '') + (type ? ' [' + type + ']' : '');
+}
+function onServerError(m){
+  var hard = [400, 401, 402, 403, 404, 429].indexOf(m.error_code) >= 0;
+  if (hard && S.running){ fail(explain(m.error_code, m.error_type, m.error_message)); }
+  else if (!S.running){ /* ignore late errors */ }
+  else { console.warn('Soniox error', m); } // server closes; onClosed will reconnect
+}
+
+/* ---------- microphone ---------- */
+async function refreshMics(){
+  try{
+    var devs = await navigator.mediaDevices.enumerateDevices();
+    var cur = el.mic.value || store.get('mic', '');
+    el.mic.innerHTML = '';
+    el.mic.add(new Option('Default microphone', ''));
+    var idx = 0;
+    devs.forEach(function(d){
+      if (d.kind !== 'audioinput') return;
+      idx++;
+      if (d.deviceId === 'default' || d.deviceId === 'communications') return;
+      el.mic.add(new Option(d.label || ('Microphone ' + idx), d.deviceId));
+    });
+    var has = Array.prototype.some.call(el.mic.options, function(o){ return o.value === cur; });
+    el.mic.value = has ? cur : '';
+  }catch(e){}
+}
+function micErrorText(e){
+  var n = e && e.name;
+  if (n === 'NotAllowedError' || n === 'SecurityError'){
+    return isIOS()
+      ? 'Microphone permission was blocked. Open Settings on the device, find this browser or the Translator app, turn on Microphone, then tap Start again.'
+      : 'Microphone permission was blocked. Click the lock icon in the address bar, allow the microphone, then press Start again.';
+  }
+  if (n === 'NotFoundError' || n === 'OverconstrainedError') return 'No usable microphone was found. Plug one in or pick another from the list.';
+  if (n === 'NotReadableError') return 'The microphone is busy in another program. Close it there and try again.';
+  return 'Could not start the microphone: ' + ((e && e.message) || e);
+}
+async function startAudio(){
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
+    throw { name:'SecurityError', message:'This browser cannot reach the microphone from this page. Use Safari, Chrome or Edge from the web address.' };
+  // iOS only lets audio start if the AudioContext is created and resumed inside the tap, before any waiting.
+  var AC = window.AudioContext || window.webkitAudioContext;
+  var ctx = new AC(); S.ctx = ctx;
+  var resumed = null;
+  try{ resumed = ctx.resume(); }catch(e){}
+  ctx.onstatechange = function(){
+    if (S.running && S.ctx === ctx && (ctx.state === 'suspended' || ctx.state === 'interrupted')){ try{ ctx.resume(); }catch(e){} }
+  };
+  var c = { audio:{ channelCount:1, echoCancellation:true, noiseSuppression:true, autoGainControl:true } };
+  if (el.mic.value) c.audio.deviceId = { exact: el.mic.value };
+  var stream;
+  try{ stream = await navigator.mediaDevices.getUserMedia(c); }
+  catch(e){
+    if (el.mic.value && (e.name === 'OverconstrainedError' || e.name === 'NotFoundError')){
+      el.mic.value = ''; store.set('mic', ''); delete c.audio.deviceId;
+      stream = await navigator.mediaDevices.getUserMedia(c);
+    } else throw e;
+  }
+  S.stream = stream;
+  refreshMics();
+  try{ if (resumed) await resumed; if (ctx.state !== 'running') await ctx.resume(); }catch(e){}
+  S.src = ctx.createMediaStreamSource(stream);
+  var mute = ctx.createGain(); mute.gain.value = 0; mute.connect(ctx.destination);
+  var node;
+  try{
+    if (!ctx.audioWorklet) throw new Error('no worklet');
+    var url = URL.createObjectURL(new Blob([workletSource()], { type:'application/javascript' }));
+    await ctx.audioWorklet.addModule(url);
+    URL.revokeObjectURL(url);
+    node = new AudioWorkletNode(ctx, 'pcm-worklet', { numberOfInputs:1, numberOfOutputs:1, channelCount:1, channelCountMode:'explicit' });
+    node.port.onmessage = function(e){ onChunk(e.data.pcm, e.data.level); };
+  }catch(err){
+    var d = new Downsampler(ctx.sampleRate, 16000, 1600, function(pcm, level){ onChunk(pcm.buffer, level); });
+    node = ctx.createScriptProcessor(4096, 1, 1);
+    node.onaudioprocess = function(e){ d.push(e.inputBuffer.getChannelData(0)); };
+  }
+  S.src.connect(node); node.connect(mute);
+  S.node = node;
+}
+function stopMic(){
+  try{ if (S.node) S.node.disconnect(); }catch(e){}
+  try{ if (S.src) S.src.disconnect(); }catch(e){}
+  try{ if (S.stream) S.stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
+  try{ if (S.ctx){ S.ctx.onstatechange = null; S.ctx.close(); } }catch(e){}
+  S.node = S.src = S.stream = S.ctx = null; meter(0);
+}
+function onChunk(buf, level){
+  S.lastChunk = performance.now();
+  meter(level);
+  if (!S.running || S.stopping) return;
+  if (S.ws && S.ready && S.ws.readyState === 1){ S.ws.send(buf); }
+  else { S.queue.push(buf); if (S.queue.length > 120) S.queue.shift(); } // keep at most about 12 s
+}
+function flushQueue(){
+  while (S.queue.length && S.ws && S.ws.readyState === 1) S.ws.send(S.queue.shift());
+}
+
+/* ---------- connection ---------- */
+function getKey(){ return el.key.value.trim(); }
+function getHints(){
+  var h = (el.hints.value || DEFAULT_HINTS).split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+  return h.length ? h : ['uk'];
+}
+function buildConfig(){
+  return {
+    model: el.model.value.trim() || DEFAULT_MODEL,
+    audio_format: 'pcm_s16le', sample_rate: 16000, num_channels: 1,
+    language_hints: getHints(),
+    translation: { type:'one_way', target_language:'en' },
+    enable_endpoint_detection: true, max_endpoint_delay_ms: 2000
+  };
+}
+function openSocket(mode, key){
+  return mode === 'protocol' ? new WebSocket(WS_URL, ['soniox-api-key', key]) : new WebSocket(WS_URL);
+}
+function connectWS(mode){
+  mode = mode || S.authMode;
+  var key = getKey(), ws;
+  try{ ws = openSocket(mode, key); }
+  catch(e){ fail('Could not open the connection: ' + e.message); return; }
+  ws.binaryType = 'arraybuffer';
+  S.ws = ws; S.ready = false;
+  var opened = false;
+  setStatus('connecting', S.reconnects ? 'Reconnecting...' : 'Connecting...');
+  ws.onopen = function(){
+    if (ws !== S.ws) return;
+    opened = true; S.everOpened = true;
+    var cfg = buildConfig();
+    if (mode === 'message') cfg.api_key = key;
+    ws.send(JSON.stringify(cfg));
+    S.ready = true; flushQueue();
+    if (S.authMode !== mode){ S.authMode = mode; store.set('authMode', mode); }
+    setStatus('live', 'Live');
+  };
+  ws.onmessage = function(ev){
+    if (ws !== S.ws || typeof ev.data !== 'string') return;
+    var m; try{ m = JSON.parse(ev.data); }catch(e){ return; }
+    handleMessage(m);
+  };
+  ws.onclose = function(){
+    if (ws !== S.ws) return;
+    S.ready = false; S.ws = null;
+    onClosed(opened, mode);
+  };
+  ws.onerror = function(){};
+}
+function onClosed(opened, mode){
+  if (S.stopping){ if (S.stopResolve) S.stopResolve(); return; }
+  if (!S.running || S.fatal) return;
+  if (!opened && !S.everOpened){
+    if (mode === 'protocol' && !S.triedLegacy){ S.triedLegacy = true; connectWS('message'); return; }
+    fail('Could not connect to Soniox. Open Settings and press Check connection: it explains what went wrong. Usual causes are a VPN or firewall blocking stt-rt.soniox.com, no internet, or opening a saved file instead of the web address.');
+    return;
+  }
+  if (S.reconnects < 5){
+    S.reconnects++;
+    setStatus('connecting', 'Reconnecting...');
+    setTimeout(function(){ if (S.running && !S.stopping && !S.fatal) connectWS(S.authMode); }, 1000 * S.reconnects);
+  } else {
+    fail('The connection dropped and could not be restored. Tap Start to continue. Your text so far is kept.');
+  }
+}
+
+/* ---------- start / stop ---------- */
+function startTimer(){
+  S.t0 = performance.now(); tick();
+  clearInterval(S.timerId); S.timerId = setInterval(tick, 1000);
+}
+function tick(){
+  var s = Math.floor((performance.now() - S.t0) / 1000);
+  el.timer.textContent = fmt(s);
+  el.cost.textContent = S.demo ? '' : 'est. $' + (s / 3600 * RATE_PER_HOUR).toFixed(2);
+  if (S.running && !S.demo && !S.stopping && S.ready){
+    var stale = performance.now() - S.lastChunk > 4000;
+    if (stale && !S.noAudio){ S.noAudio = true; setStatus('connecting', 'No sound from microphone'); }
+    else if (!stale && S.noAudio){ S.noAudio = false; setStatus('live', 'Live'); }
+  }
+}
+async function requestWake(){ try{ if (navigator.wakeLock) S.wake = await navigator.wakeLock.request('screen'); }catch(e){} }
+function releaseWake(){ try{ if (S.wake) S.wake.release(); }catch(e){} S.wake = null; }
+
+async function start(){
+  if (S.running) return;
+  hideBanner();
+  if (!getKey()){
+    showBanner('Add your Soniox API key in Settings first. Or try Demo to see how it looks.', 'info');
+    openSettings(); return;
+  }
+  if (store.get('ack', '') !== '1'){
+    if (!confirm(NOTICE)) return;
+    store.set('ack', '1');
+  }
+  S.running = true; S.stopping = false; S.fatal = false; S.demo = false; S.noAudio = false;
+  S.queue = []; S.reconnects = 0; S.everOpened = false; S.triedLegacy = false;
+  ui(); setStatus('connecting', 'Starting microphone...');
+  try{ await startAudio(); }
+  catch(e){ showBanner(micErrorText(e), 'error'); teardown('error'); return; }
+  S.lastChunk = performance.now();
+  startTimer(); requestWake();
+  connectWS();
+}
+function teardown(kind){
+  stopMic(); clearInterval(S.timerId); releaseWake();
+  var ws = S.ws; S.ws = null;
+  if (ws){ try{ ws.close(); }catch(e){} }
+  S.running = false; S.stopping = false; S.demo = false; S.ready = false; S.queue = []; S.stopResolve = null; S.noAudio = false;
+  promoteTails();
+  setStatus(kind === 'error' ? 'error' : 'idle', kind === 'error' ? 'Stopped (error)' : 'Idle');
+  ui();
+}
+function fail(msg){
+  S.fatal = true;
+  showBanner(msg, 'error');
+  teardown('error');
+}
+async function stop(){
+  if (!S.running || S.stopping) return;
+  S.stopping = true;
+  setStatus('connecting', 'Finishing...');
+  stopMic();
+  var ws = S.ws;
+  if (ws && ws.readyState === 1){
+    flushQueue();
+    try{ ws.send(''); }catch(e){}
+    await new Promise(function(res){
+      var t = setTimeout(res, 4000);
+      S.stopResolve = function(){ clearTimeout(t); res(); };
+    });
+  }
+  teardown('idle');
+}
+
+/* ---------- connection check (Settings) ---------- */
+function checkOnce(mode, key){
+  return new Promise(function(resolve){
+    var ws, done = false, timers = [], t0 = Date.now();
+    var info = { mode:mode, ok:false, opened:false, ctor:'', code:null, reason:'', msg:null, timeout:false, ms:0 };
+    function finish(extra){
+      if (done) return; done = true;
+      timers.forEach(clearTimeout);
+      try{ ws.close(); }catch(e){}
+      info.ms = Date.now() - t0;
+      for (var k in extra) info[k] = extra[k];
+      resolve(info);
+    }
+    try{ ws = openSocket(mode, key); }
+    catch(e){ info.ctor = e.name + ': ' + e.message; done = true; resolve(info); return; }
+    ws.onopen = function(){
+      info.opened = true;
+      var cfg = buildConfig(); if (mode === 'message') cfg.api_key = key;
+      ws.send(JSON.stringify(cfg));
+      ws.send(new Int16Array(4800).buffer); // 0.3 s of silence
+      timers.push(setTimeout(function(){ finish({ ok:true }); }, 2500));
+    };
+    ws.onmessage = function(ev){
+      try{
+        var m = JSON.parse(ev.data);
+        if (m.error_code) finish({ ok:false, msg:m });
+        else finish({ ok:true });
+      }catch(e){}
+    };
+    ws.onclose = function(ev){ info.code = ev.code; info.reason = ev.reason || ''; finish({ ok:false }); };
+    timers.push(setTimeout(function(){ finish({ ok:false, timeout:true }); }, 8000));
+  });
+}
+function describeAttempt(a){
+  var label = a.mode === 'protocol' ? 'Method 1 (key in the connection)' : 'Method 2 (key in first message)';
+  if (a.ok) return label + ': accepted by Soniox after ' + a.ms + ' ms.';
+  if (a.ctor) return label + ': the browser refused to start it (' + a.ctor + ').';
+  if (a.msg) return label + ': Soniox replied ' + a.msg.error_code + ' ' + (a.msg.error_type || '') + ': ' + (a.msg.error_message || '');
+  if (!a.opened) return label + ': never opened' + (a.timeout ? ' (timed out after 8 s)' : '') + '. Code ' + a.code + '. The browser gives no reason for this. It means blocked, offline, or refused before the handshake finished.';
+  return label + ': opened, then closed with code ' + a.code + (a.reason ? ' "' + a.reason + '"' : '') + ' and no message from Soniox' + (a.timeout ? ' (timed out)' : '') + '.';
+}
+async function probeReach(){
+  var t;
+  try{
+    var c = new AbortController(); t = setTimeout(function(){ c.abort(); }, 6000);
+    await fetch('https://stt-rt.soniox.com/', { mode:'no-cors', signal:c.signal });
+    clearTimeout(t); return true;
+  }catch(e){ clearTimeout(t); return false; }
+}
+async function checkConnection(){
+  var key = getKey();
+  el.checkDetails.hidden = true; el.checkDetails.textContent = '';
+  if (!key){ el.checkResult.textContent = 'Paste your API key first.'; return; }
+  el.check.disabled = true; el.checkResult.textContent = 'Checking...';
+  var a = await checkOnce('protocol', key), b = null;
+  if (!a.ok && !a.msg) b = await checkOnce('message', key);
+  var good = a.ok ? a : (b && b.ok ? b : null);
+  var serverMsg = (a.msg || (b && b.msg)) || null;
+  var lines = [describeAttempt(a)];
+  if (b) lines.push(describeAttempt(b));
+  var reach = null;
+  if (!good && !serverMsg){ reach = await probeReach(); lines.push('Network check: ' + (reach ? 'stt-rt.soniox.com answers over https.' : 'stt-rt.soniox.com did not answer over https.')); }
+  lines.push('Page: ' + location.protocol + '//, online=' + navigator.onLine + ', ' + (isIOS() ? 'iPad/iPhone' : 'computer') + ', ' + navigator.userAgent.slice(0, 60));
+  el.check.disabled = false;
+  if (good){
+    S.authMode = good.mode; store.set('authMode', good.mode);
+    el.checkResult.textContent = 'Connected. Soniox accepted the key (' + (good.mode === 'protocol' ? 'method 1' : 'method 2') + ').';
+  } else if (serverMsg){
+    el.checkResult.textContent = explain(serverMsg.error_code, serverMsg.error_type, serverMsg.error_message);
+  } else if (reach === false){
+    el.checkResult.textContent = 'This device cannot reach Soniox. Usual causes: a VPN, a firewall, or no internet. Try with the VPN off, or on another network.';
+  } else {
+    el.checkResult.textContent = 'Soniox is reachable, but the connection was refused or dropped before it replied.' +
+      (location.protocol === 'file:' && isIOS() ? ' This page was opened from a saved file on an iPad or iPhone, which blocks live connections. Open it from its web address instead.' : ' Details are below.');
+  }
+  if (!good){ el.checkDetails.textContent = lines.join('\n'); el.checkDetails.hidden = false; }
+}
+
+/* ---------- demo mode ---------- */
+var DEMO = [
+  ['Доброго ранку, колеги.', 'Good morning, colleagues.'],
+  ['Сьогодні ми розглянемо основи аналізу розвідувальної інформації.', 'Today we will look at the basics of intelligence analysis.'],
+  ['Будь ласка, відкрийте свої нотатки та дайте відповідь на запитання на екрані.', 'Please open your notes and answer the question on the screen.'],
+  ['Перший крок розвідувального циклу: планування та керівництво.', 'The first step of the intelligence cycle is planning and direction.']
+];
+function demoMessages(pair){
+  var wordsOf = function(s){ return s.split(' ').map(function(w, i){ return (i ? ' ' : '') + w; }); };
+  var U = wordsOf(pair[0]), E = wordsOf(pair[1]);
+  var fu = 0, fe = 0, out = [];
+  var tok = function(text, fin, tr){
+    return { text:text, is_final:fin, translation_status: tr ? 'translation' : 'original', language: tr ? 'en' : 'uk' };
+  };
+  var maxN = Math.max(U.length, E.length);
+  for (var k = 1; k <= maxN + 3; k++){
+    var uShown = Math.min(U.length, k), eShown = Math.max(0, Math.min(E.length, k - 1));
+    var uFinal = Math.max(0, Math.min(U.length, k - 2)), eFinal = Math.max(0, Math.min(E.length, k - 3));
+    var tokens = [], a;
+    for (a = fu; a < uFinal; a++) tokens.push(tok(U[a], true, false));
+    fu = Math.max(fu, uFinal);
+    for (a = fu; a < uShown; a++) tokens.push(tok(U[a], false, false));
+    for (a = fe; a < eFinal; a++) tokens.push(tok(E[a], true, true));
+    fe = Math.max(fe, eFinal);
+    for (a = fe; a < eShown; a++) tokens.push(tok(E[a], false, true));
+    out.push({ tokens:tokens });
+  }
+  return out;
+}
+function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+async function runDemo(){
+  if (S.running) return;
+  S.running = true; S.demo = true; S.fatal = false;
+  clearAll(); ui(); setStatus('live', 'DEMO');
+  showBanner('Demo mode: simulated text only. No microphone, no internet, not a real translation.', 'info');
+  el.cost.textContent = ''; startTimer();
+  for (var p = 0; p < DEMO.length; p++){
+    var msgs = demoMessages(DEMO[p]);
+    for (var i = 0; i < msgs.length; i++){
+      if (!S.demo) return;
+      handleMessage(msgs[i]); await sleep(260);
+    }
+    await sleep(900);
+  }
+  if (S.demo){ teardown('idle'); hideBanner(); }
+}
+function endDemo(){ teardown('idle'); hideBanner(); }
+
+/* ---------- transcript save ---------- */
+async function deliver(name, body){
+  try{
+    if (isIOS() && navigator.canShare){
+      var f = new File([body], name, { type:'text/plain' });
+      if (navigator.canShare({ files:[f] })){ await navigator.share({ files:[f], title:name }); return; }
+    }
+  }catch(e){ if (e && e.name === 'AbortError') return; }
+  var blob = new Blob([body], { type:'text/plain;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+}
+function saveTranscript(){
+  if (!hasText()){ showBanner('Nothing to save yet.', 'info'); return; }
+  var d = new Date();
+  var en = T.en.slice(); en[en.length - 1] += T.tailEn;
+  var uk = T.uk.slice(); uk[uk.length - 1] += T.tailUk;
+  var clean = function(a){ return a.map(function(s){ return s.trim(); }).filter(Boolean).join('\n'); };
+  var body = 'Live Translator transcript\nSaved: ' + d.toLocaleString() +
+    '\nNote: machine translation, not an official translation.\n\n' +
+    'ENGLISH\n' + clean(en) + '\n\nUKRAINIAN\n' + clean(uk) + '\n';
+  var name = 'translation-' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + '-' + pad(d.getHours()) + pad(d.getMinutes()) + '.txt';
+  deliver(name, body);
+}
+
+/* ---------- view controls ---------- */
+var root = document.documentElement;
+function setFont(px){
+  px = Math.max(18, Math.min(110, px));
+  root.style.setProperty('--fs-en', px + 'px');
+  root.style.setProperty('--fs-uk', Math.round(px * 0.6) + 'px');
+  store.set('fs', String(px));
+}
+function curFont(){ return parseInt(getComputedStyle(root).getPropertyValue('--fs-en'), 10) || 40; }
+function setClean(on){ document.body.classList.toggle('clean', on); }
+function outsideClick(d){
+  d.addEventListener('click', function(e){
+    var r = d.getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closeDialog(d);
+  });
+}
+
+el.start.addEventListener('click', function(){
+  if (S.demo) endDemo();
+  else if (S.running) stop();
+  else start();
+});
+el.moreBtn.addEventListener('click', function(){ openDialog(el.more); });
+el.closeMore.addEventListener('click', function(){ closeDialog(el.more); });
+el.demo.addEventListener('click', function(){ closeDialog(el.more); if (S.demo) endDemo(); else runDemo(); });
+el.clear.addEventListener('click', function(){
+  closeDialog(el.more);
+  if (hasText() && !confirm('Clear the screen? Use Save transcript first if you need the text.')) return;
+  clearAll();
+});
+el.save.addEventListener('click', function(){ closeDialog(el.more); saveTranscript(); });
+el.fsDown.addEventListener('click', function(){ setFont(curFont() - 4); });
+el.fsUp.addEventListener('click', function(){ setFont(curFont() + 4); });
+el.showUk.addEventListener('change', function(){ el.paneUk.hidden = !el.showUk.checked; store.set('showUk', el.showUk.checked ? '1' : '0'); });
+el.layout.addEventListener('click', function(){
+  var side = el.panes.classList.toggle('side');
+  el.layout.textContent = side ? 'Stacked' : 'Side by side';
+  store.set('side', side ? '1' : '0');
+});
+el.theme.addEventListener('click', function(){
+  var cur = root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  var next = cur === 'dark' ? 'light' : 'dark';
+  root.dataset.theme = next; store.set('theme', next);
+});
+el.clean.addEventListener('click', function(){ setClean(true); });
+el.clean2.addEventListener('click', function(){ closeDialog(el.more); setClean(true); });
+el.unclean.addEventListener('click', function(){ setClean(false); });
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape' && document.body.classList.contains('clean') && !el.dlg.open && !el.more.open) setClean(false);
+});
+var fsRoot = document.documentElement;
+var fsReq = fsRoot.requestFullscreen || fsRoot.webkitRequestFullscreen;
+var fsExit = document.exitFullscreen || document.webkitExitFullscreen;
+if (!(document.fullscreenEnabled || document.webkitFullscreenEnabled) || !fsReq) el.full.hidden = true;
+el.full.addEventListener('click', function(){
+  closeDialog(el.more);
+  try{
+    if (document.fullscreenElement || document.webkitFullscreenElement) fsExit.call(document);
+    else fsReq.call(fsRoot);
+  }catch(e){}
+});
+el.bannerClose.addEventListener('click', function(){
+  if (el.banner.dataset.tip === '1') store.set('a2hs', '1');
+  hideBanner();
+});
+el.mic.addEventListener('change', function(){ store.set('mic', el.mic.value); });
+el.settingsBtn.addEventListener('click', openSettings);
+el.closeSettings.addEventListener('click', function(){ closeDialog(el.dlg); });
+outsideClick(el.more); outsideClick(el.dlg);
+el.showKey.addEventListener('change', function(){ el.key.type = el.showKey.checked ? 'text' : 'password'; });
+el.check.addEventListener('click', checkConnection);
+el.saveSettings.addEventListener('click', function(){
+  if (el.remember.checked && getKey()) store.set('key', getKey()); else store.del('key');
+  store.set('model', el.model.value.trim() || DEFAULT_MODEL);
+  store.set('hints', el.hints.value.trim() || DEFAULT_HINTS);
+  el.checkResult.textContent = 'Saved.';
+  setTimeout(function(){ closeDialog(el.dlg); }, 500);
+});
+document.addEventListener('visibilitychange', function(){
+  if (document.visibilityState !== 'visible' || !S.running || S.demo) return;
+  if (!S.wake) requestWake();
+  try{ if (S.ctx && S.ctx.state !== 'running') S.ctx.resume(); }catch(e){}
+});
+window.addEventListener('beforeunload', function(e){
+  if (S.running && !S.demo){ e.preventDefault(); e.returnValue = ''; }
+});
+if (navigator.mediaDevices && navigator.mediaDevices.addEventListener)
+  navigator.mediaDevices.addEventListener('devicechange', refreshMics);
+
+/* ---------- init ---------- */
+(function init(){
+  var th = store.get('theme', ''); if (th) root.dataset.theme = th;
+  var fs = parseInt(store.get('fs', ''), 10); if (fs) setFont(fs);
+  if (store.get('showUk', '1') === '0'){ el.showUk.checked = false; el.paneUk.hidden = true; }
+  var sidePref = store.get('side', '');
+  var side = sidePref === '' ? window.innerWidth >= 1000 : sidePref === '1';
+  if (side){ el.panes.classList.add('side'); el.layout.textContent = 'Stacked'; }
+  var k = store.get('key', ''); if (k){ el.key.value = k; el.remember.checked = true; }
+  el.model.value = store.get('model', DEFAULT_MODEL);
+  el.hints.value = store.get('hints', DEFAULT_HINTS);
+  ui(); refreshMics();
+  if (location.protocol === 'file:' && isIOS())
+    showBanner('This copy was opened from a saved file. On iPhone and iPad, live translation only works from the web address. Open the hosted link instead.', 'error');
+  else if (location.protocol === 'http:' && !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname))
+    showBanner('This page was opened over plain http, so the browser will block the microphone. Use the https address.', 'error');
+  else if (isIOS() && !navigator.standalone && store.get('a2hs', '') !== '1')
+    showBanner('Tip: tap the Share button, then Add to Home Screen. It opens full screen and keeps your key saved.', 'info', true);
+})();
+
+})();
+</script>
+</body>
+</html>
