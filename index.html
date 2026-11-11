@@ -136,6 +136,8 @@ label.chk input{width:22px; height:22px; flex:none}
 .sr-only{position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; pointer-events:none; left:0; top:0}
 label.chk[hidden]{display:none}
 #forgetKey{margin:4px 0 8px; min-height:40px; padding:6px 14px; font-size:15px}
+.keyprompt{border-left:6px solid var(--accent); background:var(--bg); border-radius:10px; padding:10px 12px; margin:0 0 14px; font-size:15px; line-height:1.4; font-weight:600}
+.keyprompt[hidden]{display:none}
 .langs{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 0 12px}
 .lang span{display:block; font-size:14px; color:var(--muted); margin-bottom:4px}
 .lang select{width:100%}
@@ -227,6 +229,7 @@ a{color:var(--accent)}
 
 <dialog id="settings" tabindex="-1">
   <h2>Settings</h2>
+  <div class="keyprompt" id="keyPrompt" hidden>Enter your Soniox key below to start. Until a key is entered, nothing will be translated.</div>
   <form id="keyForm" autocomplete="on">
   <div class="field">
     <label for="keyInput">Soniox API key</label>
@@ -592,6 +595,8 @@ function getKey(){ return el.key.value.trim(); }
 var REMEMBER_HOSTS = ['speech-projects.github.io', 'localhost', '127.0.0.1'];
 function rememberAllowed(){ return REMEMBER_HOSTS.indexOf(location.hostname) >= 0 && (location.protocol === 'https:' || location.protocol === 'http:'); }
 function updateForget(){ el.forget.hidden = !(rememberAllowed() && store.get('key', '')); }
+// The "enter your key" message at the top of Settings shows while no key is loaded.
+function updateKeyPrompt(){ $('keyPrompt').hidden = !!getKey(); }
 function persistKey(){
   if (!rememberAllowed()) return;
   var v = getKey();
@@ -1033,7 +1038,7 @@ outsideClick(el.more); outsideClick(el.dlg);
 el.showKey.addEventListener('change', function(){ el.key.type = el.showKey.checked ? 'text' : 'password'; });
 el.remember.addEventListener('change', persistKey);
 el.forget.addEventListener('click', function(){
-  store.del('key'); sess.del('key'); el.key.value = ''; el.remember.checked = false; updateForget();
+  store.del('key'); sess.del('key'); el.key.value = ''; el.remember.checked = false; updateForget(); updateKeyPrompt();
   el.checkResult.textContent = 'The saved key was removed from this device.';
 });
 // The key box sits in a form only so the iPhone Passwords app can fill it. Nothing is ever submitted anywhere.
@@ -1091,7 +1096,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.addEventListener)
   }
   var k = sess.get('key', ''); if (k && !el.key.value) el.key.value = k;
   updateForget();
-  el.key.addEventListener('input', function(){ var v = getKey(); if (v) sess.set('key', v); else sess.del('key'); persistKey(); });
+  el.key.addEventListener('input', function(){ var v = getKey(); if (v) sess.set('key', v); else sess.del('key'); persistKey(); updateKeyPrompt(); });
   el.model.value = store.get('model', DEFAULT_MODEL);
   store.del('hints'); // the old hints box held "uk,en"; the chosen languages now supply those
   el.hints.value = store.get('hints2', '');
@@ -1101,7 +1106,12 @@ if (navigator.mediaDevices && navigator.mediaDevices.addEventListener)
   else if (location.protocol === 'http:' && !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname))
     showBanner('This page was opened over plain http, so the browser will block the microphone. Use the https address.', 'error');
   else if (isIOS() && !navigator.standalone && store.get('a2hs', '') !== '1')
-    showBanner('Tip: tap the Share button, then Add to Home Screen. It opens full screen like an app.', 'info', true);
+    showBanner('Tip: in Safari, tap the menu button, then Share, then Add to Home Screen. It opens full screen like an app.', 'info', true);
+  // No key loaded: ask for it straight away, so nobody mistakes the empty screen for a working one.
+  updateKeyPrompt();
+  if (!getKey() && !(el.banner.className === 'error' && !el.banner.hidden)){
+    setTimeout(function(){ openDialog(el.dlg); try{ el.key.focus({ preventScroll:true }); }catch(e){} }, 350);
+  }
 })();
 
 })();
