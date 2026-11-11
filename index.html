@@ -179,6 +179,7 @@ body.subs .text > p:first-child{margin-top:auto}
 .speakline{display:flex; gap:10px; align-items:center}
 .speakline .chk{flex:1}
 .speakline select{min-width:118px; min-height:40px; padding:6px 30px 6px 12px}
+#setupLabel{margin-top:14px}
 .setups{display:flex; gap:8px; margin:0 0 12px}
 .setups select{flex:1; min-width:0}
 .setups button{padding:8px 14px}
@@ -281,7 +282,7 @@ a{color:var(--accent)}
   </div>
   <div class="field-label" id="setupLabel">Setups (stop first to switch)</div>
   <div class="setups" role="group" aria-labelledby="setupLabel">
-    <select id="setupSel" aria-label="Saved setups"><option value="">Choose a setup...</option></select>
+    <select id="setupSel" aria-label="Saved setups"><option value="">Choose...</option></select>
     <button id="setupSave" title="Save the current languages, direction, panes, layout and text size under a name">Save</button>
     <button id="setupDel" disabled>Delete</button>
   </div>
@@ -1200,7 +1201,7 @@ function currentSetup(){
 }
 function refreshSetups(keep){
   var o = getSetups(), sel = el.setupSel;
-  sel.innerHTML = ''; sel.add(new Option('Choose a setup...', ''));
+  sel.innerHTML = ''; sel.add(new Option('Choose...', ''));
   Object.keys(o).forEach(function(n){ sel.add(new Option(n, n)); });
   sel.value = (keep && o[keep]) ? keep : '';
   el.setupDel.disabled = !sel.value;
