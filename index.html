@@ -189,6 +189,8 @@ body.subs .text > p:first-child{margin-top:auto}
 #hearing{color:var(--muted); font-size:13px; white-space:nowrap}
 #hearing[hidden]{display:none}
 .bbtns{display:flex; gap:8px; flex:none}
+.ignorerow{margin:0 0 10px}
+.ignorerow.off{opacity:.55}
 .speakrow{margin:2px 0 12px}
 .speakrow[hidden]{display:none}
 .speakline{display:flex; gap:10px; align-items:center}
@@ -282,7 +284,8 @@ a{color:var(--accent)}
     <button id="modeBoth" data-mode="both" aria-pressed="false">Both ways</button>
     <button id="modeEnUk" data-mode="ba" aria-pressed="false">Eng to Ukr</button>
   </div>
-  <div class="hint" id="modeHint" style="margin-bottom:12px"></div>
+  <div class="hint" id="modeHint" style="margin-bottom:6px"></div>
+  <label class="chk ignorerow" id="ignoreRow" title="Skips speech in the language you are reading, such as an in-person interpreter, and shows only the translation of the other language."><input type="checkbox" id="ignoreOn"> <span id="ignoreText">Ignore spoken English</span></label>
   <div class="grid">
     <button id="subsBtn" class="wide">Subtitles</button>
     <button id="cleanBtn2">Clean view</button>
@@ -409,6 +412,7 @@ var el = {
   hearing: $('hearing'), bannerAction: $('bannerAction'), bannerFn: null,
   setupSel: $('setupSel'), setupSave: $('setupSave'), setupDel: $('setupDel'),
   speakRow: $('speakRow'), speakOn: $('speakOn'), speakLang: $('speakLang'),
+  ignoreRow: $('ignoreRow'), ignoreOn: $('ignoreOn'), ignoreText: $('ignoreText'),
   check: $('checkBtn'), saveSettings: $('saveSettings'), closeSettings: $('closeSettings'),
   checkResult: $('checkResult'), checkDetails: $('checkDetails')
 };
@@ -466,7 +470,7 @@ function rebuildModes(){
 function modeSource(){ return S.mode === 'ba' ? 'en' : 'uk'; }
 function modeTarget(){ return S.mode === 'ba' ? 'uk' : 'en'; }
 var S = {
-  mode:'ab', langA:DEFAULT_LANG_A, langB:DEFAULT_LANG_B,
+  mode:'ab', langA:DEFAULT_LANG_A, langB:DEFAULT_LANG_B, ignore: store.get('ignore', '') === '1', untagged:0, warnedIgnore:false,
   running:false, demo:false, stopping:false, fatal:false,
   ws:null, ready:false, queue:[], reconnects:0, everOpened:false, triedLegacy:false,
   authMode: store.get('authMode', 'protocol'),
@@ -500,6 +504,7 @@ function ui(){
   el.demo.disabled = S.running && !S.demo;
   el.modeBtns.forEach(function(b){ b.disabled = S.running; });
   el.langA.disabled = el.langB.disabled = S.running;
+  refreshIgnore();
 }
 function meter(level){ el.meter.style.width = Math.min(100, Math.round(level * 140)) + '%'; }
 function openDialog(d){
@@ -569,6 +574,21 @@ function setHearing(code){
   if (!n || !S.running) return;
   el.hearing.textContent = 'hearing ' + n; el.hearing.hidden = false;
 }
+// Ignore spoken language: in a one-way direction, skip speech in the language you are reading (the translation target), such as an interpreter.
+// Both ways needs both languages, so it does not apply there.
+function ignoreCode(){ return S.mode === 'ab' ? S.langB : (S.mode === 'ba' ? S.langA : ''); }
+function ignoreActive(){ return !!S.ignore && S.mode !== 'both'; }
+function setIgnoreChip(){
+  if (!S.running || !ignoreActive()) return;
+  el.hearing.textContent = 'ignoring ' + langName(ignoreCode()); el.hearing.hidden = false;
+}
+function refreshIgnore(){
+  var both = S.mode === 'both', n = langName(ignoreCode());
+  el.ignoreText.textContent = both ? 'Ignore spoken language (not used in Both ways)' : 'Ignore spoken ' + n + ' (such as an interpreter)';
+  el.ignoreOn.checked = !!S.ignore;
+  el.ignoreOn.disabled = both || S.running;
+  el.ignoreRow.classList.toggle('off', both);
+}
 // "Latest" appears on a pane that has been scrolled away from the newest text
 function wireJump(box, btn){
   box.addEventListener('scroll', function(){ btn.hidden = !(box.scrollHeight - box.scrollTop - box.clientHeight > 140); });
@@ -587,6 +607,14 @@ function handleMessage(m){
       // Every token carries its language, so text goes to the pane of its own language, spoken or translated.
       var isTr = t.translation_status === 'translation';
       var code = String(t.language || '').toLowerCase().split(/[-_]/)[0];
+      // "Ignore spoken <language>": drop what was SAID in the language being read (an interpreter, say). Translated text is never dropped.
+      if (ignoreActive() && !isTr && txt.trim()){
+        if (code){ if (code === ignoreCode()) continue; }
+        else if (++S.untagged >= 6 && !S.warnedIgnore){
+          S.warnedIgnore = true;
+          showBanner('Soniox is not labeling which language each word is in, so Ignore cannot tell who is speaking ' + langName(ignoreCode()) + '. Turn Ignore off in More.', 'info');
+        }
+      }
       var lang = code === S.langA ? 'uk' : (code === S.langB ? 'en' : (isTr ? modeTarget() : modeSource())); // no usable tag: translated text goes to the target language, spoken text to the source
       if (!isTr && S.mode === 'both' && langName(code)) setHearing(code);
       if (isTr && t.is_final) ttsFeed(lang === 'uk' ? S.langA : S.langB, txt);
@@ -769,6 +797,7 @@ function buildConfig(){
   } else {
     cfg.translation = { type:'one_way', target_language:S.langB };
   }
+  if (ignoreActive()) cfg.enable_language_identification = true; // so every word says which language it is in; the proven settings stay as they were when Ignore is off
   return cfg;
 }
 function openSocket(mode, key){
@@ -792,6 +821,7 @@ function connectWS(mode){
     S.ready = true; flushQueue();
     if (S.authMode !== mode){ S.authMode = mode; store.set('authMode', mode); }
     setStatus('live', 'Live');
+    setIgnoreChip();
   };
   ws.onmessage = function(ev){
     if (ws !== S.ws || typeof ev.data !== 'string') return;
@@ -854,7 +884,7 @@ async function start(){
     store.set('ack', '1');
   }
   S.running = true; S.stopping = false; S.fatal = false; S.demo = false; S.noAudio = false;
-  S.queue = []; S.reconnects = 0; S.everOpened = false; S.triedLegacy = false; S.t0 = 0;
+  S.queue = []; S.reconnects = 0; S.everOpened = false; S.triedLegacy = false; S.t0 = 0; S.untagged = 0; S.warnedIgnore = false;
   var run = S.runId = (S.runId || 0) + 1; // lets a Stop tapped while the microphone is still starting cancel this start
   ui(); setStatus('connecting', 'Starting microphone...');
   try{ await startAudio(); }
@@ -1074,7 +1104,7 @@ async function runDemo(){
   }
   S.running = true; S.demo = true; S.fatal = false;
   if (TTS.on) ttsUnlock();
-  clearAll(); ui(); setStatus('live', 'DEMO');
+  clearAll(); ui(); setStatus('live', 'DEMO'); setIgnoreChip();
   showBanner('Demo mode: simulated text only. No microphone, no internet, not a real translation.', 'info');
   el.cost.textContent = ''; startTimer();
   for (var p = 0; p < dA.length; p++){
@@ -1166,6 +1196,7 @@ function applyMode(){
   el.subs.textContent = 'Big ' + A + ' subtitles';
   el.subs.title = 'Speak ' + B + '. ' + A + ' fills the screen in large text and the controls are hidden. Best with the device on a stand, sideways.';
   refreshSpeakLang();
+  refreshIgnore();
   applySplit();
   el.modeHint.textContent = m.hint;
   el.panes.classList.toggle('both', S.mode === 'both');
@@ -1235,7 +1266,7 @@ function getSetups(){ try{ var o = JSON.parse(store.get('setups', '{}')); return
 function putSetups(o, keep){ store.set('setups', JSON.stringify(o)); refreshSetups(keep); }
 function currentSetup(){
   return { a:S.langA, b:S.langB, mode:S.mode, swap:document.body.classList.contains('swap'), showEn:el.showEn.checked, showUk:el.showUk.checked,
-    side:el.panes.classList.contains('side'), subs:document.body.classList.contains('subs'), fs:curFont(), split:S.split };
+    side:el.panes.classList.contains('side'), subs:document.body.classList.contains('subs'), fs:curFont(), split:S.split, ignore:S.ignore };
 }
 function refreshSetups(keep){
   var o = getSetups(), sel = el.setupSel;
@@ -1252,6 +1283,7 @@ function applySetup(s){
     if (S.langA !== s.a || S.langB !== s.b) return false;
   }
   if (typeof s.split === 'number' && s.split >= SPLIT_MIN && s.split <= SPLIT_MAX){ var so = getSplits(); so[s.mode] = s.split; store.set('split', JSON.stringify(so)); }
+  S.ignore = !!s.ignore; store.set('ignore', S.ignore ? '1' : '0');
   S.mode = s.mode; store.set('mode', s.mode); applyMode(); setSwap(!!s.swap);
   el.showEn.checked = !!s.showEn; el.showUk.checked = !!s.showUk;
   if (!el.showEn.checked && !el.showUk.checked) el.showEn.checked = true;
@@ -1326,6 +1358,9 @@ el.speakOn.addEventListener('change', function(){
     TTS.on = true; ttsUnlock();
   } else { ttsStop(); TTS.on = false; }
   store.set('speak', TTS.on ? '1' : '0');
+});
+el.ignoreOn.addEventListener('change', function(){
+  S.ignore = el.ignoreOn.checked; store.set('ignore', S.ignore ? '1' : '0');
 });
 el.speakLang.addEventListener('change', function(){
   TTS.code = el.speakLang.value; store.set('speakLang', TTS.code);
