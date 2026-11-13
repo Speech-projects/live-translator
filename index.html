@@ -18,6 +18,8 @@
   --accent:#b45309; --accent-ink:#ffffff; --ok:#15803d; --warn:#b45309; --bad:#b91c1c;
   --tail:#8a8178; --btn:#efeae3; --btn-ink:#1c1917;
   --fs-en:40px; --fs-uk:24px;
+  /* the screen-edge margins (notch, home bar) as variables, so Upside down and Lock rotation can move them to the right sides */
+  --sat:env(safe-area-inset-top); --sab:env(safe-area-inset-bottom); --sal:env(safe-area-inset-left); --sar:env(safe-area-inset-right);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -37,7 +39,7 @@ body{
   font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
   height:100vh; height:100dvh;
   display:flex; flex-direction:column; gap:8px;
-  padding:calc(8px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) 0 calc(12px + env(safe-area-inset-left));
+  padding:calc(8px + var(--sat)) calc(12px + var(--sar)) 0 calc(12px + var(--sal));
   -webkit-text-size-adjust:100%; overscroll-behavior:none; touch-action:manipulation;
 }
 header{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap}
@@ -110,26 +112,26 @@ body.swap #enText{font-size:var(--fs-uk); line-height:1.35; font-weight:400; col
 #panes.both .text p.tr{border-left:4px solid var(--accent); padding-left:10px}
 /* Both ways: neither language is the "main" one, so the boxes start half and half and the text is the same size and weight in both */
 #panes.both:not(.solo-en):not(.solo-uk) #enText, #panes.both:not(.solo-en):not(.solo-uk) #ukText, body.swap #panes.both:not(.solo-en):not(.solo-uk) #enText, body.swap #panes.both:not(.solo-en):not(.solo-uk) #ukText{font-size:calc(var(--fs-en) * .8); line-height:1.3; font-weight:600; color:var(--ink)}
-#dock{display:flex; gap:8px; padding:2px 0 calc(8px + env(safe-area-inset-bottom)); align-items:stretch}
+#dock{display:flex; gap:8px; padding:2px 0 calc(8px + var(--sab)); align-items:stretch}
 #dock .primary{flex:1; min-height:54px; min-width:104px}
 #dock button:not(.primary){min-width:50px; padding:10px 12px}
 footer{display:none; font-size:12px; color:var(--muted); padding-bottom:6px}
 @media (min-width:900px){ footer{display:block} }
 body.clean header, body.clean #dock, body.clean footer{display:none}
-body.clean{padding-bottom:calc(8px + env(safe-area-inset-bottom))}
-#cleanBar{position:fixed; top:calc(10px + env(safe-area-inset-top)); right:calc(14px + env(safe-area-inset-right)); display:flex; gap:8px; z-index:5}
+body.clean{padding-bottom:calc(8px + var(--sab))}
+#cleanBar{position:fixed; top:calc(10px + var(--sat)); right:calc(14px + var(--sar)); display:flex; gap:8px; z-index:5}
 #unclean, #cleanStart{display:none; min-height:44px; opacity:.45}
 body.clean #unclean, body.clean #cleanStart{display:block}
 #cleanStart.live{background:var(--bad); border-color:var(--bad); color:#fff; opacity:.7}
 body.clean #banner{margin-top:50px} /* keep tips and errors clear of the Start and Show controls buttons in the corner */
 dialog{
   border:1px solid var(--line); border-radius:16px; background:var(--panel); color:var(--ink);
-  width:min(560px,calc(100% - 20px)); max-height:90vh; max-height:90dvh; overflow:auto; padding:18px 18px calc(18px + env(safe-area-inset-bottom));
+  width:min(560px,calc(100% - 20px)); max-height:90vh; max-height:90dvh; overflow:auto; padding:18px 18px calc(18px + var(--sab));
 }
 dialog::backdrop{background:rgba(0,0,0,.5)}
 dialog:focus{outline:none}
 dialog h2{margin:0 0 12px; font-size:19px}
-dialog.sheet{margin:auto auto calc(10px + env(safe-area-inset-bottom)); width:min(560px,calc(100% - 20px))}
+dialog.sheet{margin:auto auto calc(10px + var(--sab)); width:min(560px,calc(100% - 20px))}
 @media (min-width:700px){ dialog.sheet{margin:auto} }
 .field{display:flex; flex-direction:column; gap:5px; margin-bottom:12px}
 .field label{font-size:14px; color:var(--muted)}
@@ -157,9 +159,11 @@ label.chk[hidden]{display:none}
 .lang span{display:block; font-size:14px; color:var(--muted); margin-bottom:4px}
 .lang select{width:100%}
 /* Home Screen app on a newer iPhone: iOS fades whatever sits right under the status bar, so start lower */
-body.standalone{padding-top:calc(30px + env(safe-area-inset-top))}
-@media (display-mode: standalone){ body{padding-top:calc(30px + env(safe-area-inset-top))} }
-#flipQuick{display:inline-flex; align-items:center; justify-content:center}
+body.standalone{padding-top:calc(30px + var(--sat))}
+@media (display-mode: standalone){ body{padding-top:calc(30px + var(--sat))} }
+#flipQuick{display:inline-flex; align-items:center; justify-content:center; position:relative}
+#flipQuick .padlock{position:absolute; right:3px; bottom:3px; width:15px; height:15px; display:none}
+#flipQuick.locked .padlock{display:block}
 #flipQuick svg{display:block}
 #flipQuick.on{background:var(--accent); color:var(--accent-ink); border-color:var(--accent)}
 .grid button.on{background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:700}
@@ -168,18 +172,21 @@ body.standalone{padding-top:calc(30px + env(safe-area-inset-top))}
 #closeMore{position:sticky; bottom:8px; z-index:1; box-shadow:0 0 0 8px var(--panel), 0 -18px 14px 2px var(--panel)}
 /* Upside down: the whole page turns 180 degrees so the phone can be held with its bottom edge (and bottom microphone) toward the speaker.
    The notch and home-indicator margins swap sides, and the sheets open at the edge nearest your thumb. */
+html.flip{--sat:env(safe-area-inset-bottom); --sab:env(safe-area-inset-top); --sal:env(safe-area-inset-right); --sar:env(safe-area-inset-left)}
 html.flip body{
   transform:rotate(180deg);
-  padding:calc(8px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left)) 0 calc(12px + env(safe-area-inset-right));
+  padding:calc(8px + var(--sat)) calc(12px + var(--sar)) 0 calc(12px + var(--sal));
 }
-html.flip #dock{padding-bottom:calc(8px + env(safe-area-inset-top))}
-html.flip body.standalone #dock{padding-bottom:calc(30px + env(safe-area-inset-top))}
-html.flip body.clean{padding-bottom:calc(8px + env(safe-area-inset-top))}
-html.flip body.standalone.clean{padding-bottom:calc(30px + env(safe-area-inset-top))}
-html.flip #cleanBar{top:calc(10px + env(safe-area-inset-bottom)); right:calc(14px + env(safe-area-inset-left))}
+html.flip body.standalone #dock{padding-bottom:calc(30px + var(--sab))}
+html.flip body.clean{padding-bottom:calc(8px + var(--sab))}
+html.flip body.standalone.clean{padding-bottom:calc(30px + var(--sab))}
 html.flip dialog{transform:rotate(180deg)}
-html.flip dialog.sheet{margin:calc(10px + env(safe-area-inset-top)) auto auto}
+html.flip dialog.sheet{margin:calc(10px + var(--sab)) auto auto}
 @media (min-width:700px){ html.flip dialog.sheet{margin:auto} }
+/* Lock rotation: while the phone is turned, iOS turns the page. The page turns itself back, so the screen stays fixed to the phone. The script then sets the
+   body's size and transform, plus --rot, --pw, --ph (the screen's size as the phone is held) and the margin variables. Sheets are centred and rotated to match. */
+html.lockrot dialog{position:fixed; inset:auto; left:50%; top:50%; margin:0; width:min(560px, calc(var(--pw) - 20px)); max-height:calc(var(--ph) * .9); transform:translate(-50%,-50%) rotate(var(--rot))}
+html.lockrot dialog.sheet{margin:0}
 /* subtitle style: the newest line sits at the bottom of the pane and older lines fade out above it, like TV subtitles */
 body.subs .text{display:flex; flex-direction:column; -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 26%); mask-image:linear-gradient(to bottom,transparent 0,#000 26%)}
 body.subs .text:empty{-webkit-mask-image:none; mask-image:none}
@@ -262,7 +269,7 @@ a{color:var(--accent)}
   <button id="swapBtn" aria-label="Swap which language is large and on top" title="Swap which language is large and on top">Swap</button>
   <button id="clearBtn" aria-label="Clear the screen" title="Clear the screen">Clear</button>
   <button id="cleanBtn" class="optional" title="Hide the controls for projecting">Clean</button>
-  <button id="flipQuick" aria-label="Turn the screen upside down" aria-pressed="false" title="Turn the screen upside down"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"/><path d="M20.5 3.5v5h-5"/></svg></button>
+  <button id="flipQuick" aria-label="Turn the screen upside down" aria-pressed="false" title="Turn the screen upside down"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"/><path d="M20.5 3.5v5h-5"/></svg><svg class="padlock" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><rect x="4" y="11" width="16" height="11" rx="2.5" stroke="none"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none"/></svg></button>
   <button id="moreBtn" aria-haspopup="dialog">More</button>
 </nav>
 
@@ -301,6 +308,7 @@ a{color:var(--accent)}
     <label class="chk"><input type="checkbox" id="showEn" checked> <span id="showEnText">Show English</span></label>
     <label class="chk"><input type="checkbox" id="showUk" checked> <span id="showUkText">Show Ukrainian</span></label>
   </div>
+  <label class="chk lockrow" id="lockRow" title="Keeps the screen fixed to the phone when you turn it, instead of swinging sideways. Also available as the second tap on the small arrow button."><input type="checkbox" id="lockOn"> <span>Lock rotation (the screen stays fixed to the phone when you turn it)</span></label>
   <div class="field-label" id="setupLabel">Setups (stop first to switch)</div>
   <div class="setups" role="group" aria-labelledby="setupLabel">
     <select id="setupSel" aria-label="Saved setups"><option value="">Choose...</option></select>
@@ -412,7 +420,7 @@ var el = {
   hearing: $('hearing'), bannerAction: $('bannerAction'), bannerFn: null,
   setupSel: $('setupSel'), setupSave: $('setupSave'), setupDel: $('setupDel'),
   speakRow: $('speakRow'), speakOn: $('speakOn'), speakLang: $('speakLang'),
-  ignoreRow: $('ignoreRow'), ignoreOn: $('ignoreOn'), ignoreText: $('ignoreText'),
+  ignoreRow: $('ignoreRow'), ignoreOn: $('ignoreOn'), ignoreText: $('ignoreText'), lockOn: $('lockOn'),
   check: $('checkBtn'), saveSettings: $('saveSettings'), closeSettings: $('closeSettings'),
   checkResult: $('checkResult'), checkDetails: $('checkDetails')
 };
@@ -470,7 +478,7 @@ function rebuildModes(){
 function modeSource(){ return S.mode === 'ba' ? 'en' : 'uk'; }
 function modeTarget(){ return S.mode === 'ba' ? 'uk' : 'en'; }
 var S = {
-  mode:'ab', langA:DEFAULT_LANG_A, langB:DEFAULT_LANG_B, ignore: store.get('ignore', '') === '1', untagged:0, warnedIgnore:false,
+  mode:'ab', langA:DEFAULT_LANG_A, langB:DEFAULT_LANG_B, ignore: store.get('ignore', '') === '1', untagged:0, warnedIgnore:false, lock: store.get('lock', '') === '1',
   running:false, demo:false, stopping:false, fatal:false,
   ws:null, ready:false, queue:[], reconnects:0, everOpened:false, triedLegacy:false,
   authMode: store.get('authMode', 'protocol'),
@@ -1299,11 +1307,74 @@ el.showUk.addEventListener('change', function(){ if (!el.showUk.checked && !el.s
 el.swapBtn.addEventListener('click', function(){ closeDialog(el.more); setSwap(!document.body.classList.contains('swap')); });
 function setFlip(on){
   root.classList.toggle('flip', on);
-  [el.flip, el.flipQuick].forEach(function(b){ b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+  el.flip.classList.toggle('on', on); el.flip.setAttribute('aria-pressed', on ? 'true' : 'false');
   store.set('flip', on ? '1' : '0');
+  syncQuick(); applyLock();
 }
 el.flip.addEventListener('click', function(){ closeDialog(el.more); setFlip(!root.classList.contains('flip')); });
-el.flipQuick.addEventListener('click', function(){ setFlip(!root.classList.contains('flip')); });
+
+/* ---------- lock rotation ---------- */
+// A web page cannot ask iOS to lock the screen's orientation. This does the next best thing: while the phone is turned, the page is turned back the
+// opposite way, so the screen stays fixed to the phone, as a lock would. (Control Center's Portrait Orientation Lock does the same for every app.)
+function deviceAngle(){
+  var a = (typeof window.orientation === 'number') ? window.orientation
+        : ((window.screen && screen.orientation && typeof screen.orientation.angle === 'number') ? screen.orientation.angle : 0);
+  return ((a % 360) + 360) % 360; // degrees the phone is turned counter-clockwise from upright portrait: 0, 90, 180 or 270
+}
+function readInsets(){ // the screen-edge margins as the browser sees them
+  var p = document.createElement('div');
+  p.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
+  root.appendChild(p);
+  var c = getComputedStyle(p), r = { t: parseFloat(c.paddingTop) || 0, r: parseFloat(c.paddingRight) || 0, b: parseFloat(c.paddingBottom) || 0, l: parseFloat(c.paddingLeft) || 0 };
+  p.remove(); return r;
+}
+function applyLock(){
+  var st = document.body.style, rs = root.style, flipped = root.classList.contains('flip');
+  var W = window.innerWidth, H = window.innerHeight, a = S.lock ? deviceAngle() : 0, sideways = (a === 90 || a === 270);
+  // only act once the browser has really turned its page: a sideways phone has a wide page
+  var turned = !!S.lock && a !== 0 && (!sideways || W > H);
+  root.classList.toggle('locked', !!S.lock);
+  root.classList.toggle('lockrot', turned);
+  if (!turned){
+    ['position', 'left', 'top', 'width', 'height', 'transformOrigin', 'transform'].forEach(function(k){ st[k] = ''; });
+    ['--sat', '--sab', '--sal', '--sar', '--rot', '--pw', '--ph'].forEach(function(k){ rs.removeProperty(k); });
+    return;
+  }
+  var pw = sideways ? H : W, ph = sideways ? W : H;               // the size of the screen as the phone itself is held
+  var v = readInsets(), c;                                        // margins in the phone's own frame: top, right, bottom, left
+  if (a === 90) c = { t: v.l, r: v.t, b: v.r, l: v.b };           // phone turned counter-clockwise: its top edge is at the browser's left
+  else if (a === 270) c = { t: v.r, r: v.b, b: v.l, l: v.t };     // phone turned clockwise: its top edge is at the browser's right
+  else c = { t: v.b, r: v.l, b: v.t, l: v.r };                    // upside down
+  if (flipped) c = { t: c.b, r: c.l, b: c.t, l: c.r };            // Upside down turns the page a further half turn
+  rs.setProperty('--rot', ((360 - a + (flipped ? 180 : 0)) % 360) + 'deg'); rs.setProperty('--pw', pw + 'px'); rs.setProperty('--ph', ph + 'px');
+  rs.setProperty('--sat', c.t + 'px'); rs.setProperty('--sar', c.r + 'px'); rs.setProperty('--sab', c.b + 'px'); rs.setProperty('--sal', c.l + 'px');
+  st.position = 'fixed'; st.left = '0'; st.top = '0'; st.width = pw + 'px'; st.height = ph + 'px'; st.transformOrigin = '0 0';
+  var t = a === 90 ? 'translateY(' + H + 'px) rotate(-90deg)' : (a === 270 ? 'translateX(' + W + 'px) rotate(90deg)' : 'translate(' + W + 'px,' + H + 'px) rotate(180deg)');
+  if (flipped) t += ' translate(' + pw + 'px,' + ph + 'px) rotate(180deg)'; // half a turn about the middle of the phone-shaped page
+  st.transform = t;
+}
+function syncQuick(){ // the small arrow button: first tap turns the screen upside down, the second locks rotation, the third undoes both
+  var f = root.classList.contains('flip'), b = el.flipQuick;
+  b.classList.toggle('on', f); b.classList.toggle('locked', !!S.lock);
+  b.setAttribute('aria-pressed', f ? 'true' : 'false');
+  var label = !f ? 'Turn the screen upside down' : (S.lock ? 'Unlock rotation and turn the screen back' : 'Lock rotation');
+  b.setAttribute('aria-label', label); b.title = label;
+}
+function setLock(on, quiet){
+  S.lock = !!on; store.set('lock', S.lock ? '1' : '0');
+  el.lockOn.checked = S.lock; syncQuick(); applyLock();
+  if (!quiet && S.lock) showBanner('Rotation locked. The screen now stays fixed to the phone when you turn it. Tap the arrow button again to unlock.', 'info');
+}
+el.flipQuick.addEventListener('click', function(){
+  if (!root.classList.contains('flip')) setFlip(true);
+  else if (!S.lock) setLock(true);
+  else { setLock(false, true); setFlip(false); }
+});
+el.lockOn.addEventListener('change', function(){ setLock(el.lockOn.checked); });
+var lockTimer = 0;
+function lockSoon(){ clearTimeout(lockTimer); lockTimer = setTimeout(applyLock, 60); setTimeout(applyLock, 450); } // iOS reports its new size a moment after turning
+window.addEventListener('orientationchange', lockSoon); window.addEventListener('resize', lockSoon);
+try{ if (window.screen && screen.orientation && screen.orientation.addEventListener) screen.orientation.addEventListener('change', lockSoon); }catch(e){}
 el.layout.addEventListener('click', function(){
   var side = el.panes.classList.toggle('side');
   el.layout.textContent = side ? 'Stacked' : 'Side by side';
@@ -1466,6 +1537,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.addEventListener)
 (function init(){
   var th = store.get('theme', ''); if (th) root.dataset.theme = th;
   if (store.get('flip', '') === '1') setFlip(true);
+  el.lockOn.checked = S.lock; syncQuick(); applyLock();
   var fs = parseInt(store.get('fs', ''), 10); if (fs) setFont(fs);
   if (navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) document.body.classList.add('standalone');
   var la = store.get('langA', DEFAULT_LANG_A), lb = store.get('langB', DEFAULT_LANG_B);
