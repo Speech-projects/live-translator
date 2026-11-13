@@ -382,7 +382,7 @@ a{color:var(--accent)}
   <div class="field">
     <label for="typeModelInput">Claude model for typing</label>
     <input type="text" id="typeModelInput" autocapitalize="off" autocorrect="off" spellcheck="false">
-    <div class="hint">Leave as is. For quicker, cheaper replies you can try claude-haiku-5-5.</div>
+    <div class="hint">Leave as is: Haiku is quick and cheap, and plenty for translating a sentence. For the strongest translation you can type claude-opus-5-5 here instead.</div>
   </div>
   <div class="field">
     <label for="modelInput">Model</label>
@@ -1117,7 +1117,7 @@ function refreshSpeakLang(){
 /* ---------- typing: text in, translation out (needs a Claude key) ---------- */
 // Soniox translates speech only, so typed text goes to Claude (Anthropic) instead, with its own key. Nothing is sent until you press Send.
 // A web page may call the Claude API directly only with the browser-access header below; the key is never put in the address.
-var TYPE_URL = 'https://api.anthropic.com/v1/messages', TYPE_MODEL = 'claude-opus-5-5';
+var TYPE_URL = 'https://api.anthropic.com/v1/messages', TYPE_MODEL = 'claude-haiku-5-5'; // a short translation does not need the biggest model: Haiku is quicker and far cheaper
 function typeKey(){ return (el.tkey.value || '').trim(); }
 function typeSetStatus(msg, bad){ el.typeStatus.textContent = scrub(msg || ''); el.typeStatus.classList.toggle('bad', !!bad); }
 function typeErrorText(status, data){
@@ -1139,23 +1139,28 @@ async function translateTyped(text, fromCode, toCode){
   var body = { model: model, max_tokens: 4096, system: system, messages: [{ role: 'user', content: '<text>' + text + '</text>' }], output_config: { effort: 'low' } };
   var headers = { 'content-type': 'application/json', 'x-api-key': typeKey(), 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' };
   var unreachable = 'Could not reach Claude. Check the internet connection, or a VPN or firewall blocking api.anthropic.com.';
-  async function call(withFallback){
-    var b = body, h = headers; // if Claude's safety check declines a harmless translation, the API re-runs it on another model (Opus only)
-    if (withFallback){ b = Object.assign({}, body, { fallbacks: 'default' }); h = Object.assign({}, headers, { 'anthropic-beta': 'server-side-fallback-2026-07-01' }); }
+  var isHaiku = model === 'claude-haiku-5-5', isOpus = model === 'claude-opus-5-5';
+  async function call(extras){
+    var b = body, h = headers;
+    if (extras && isHaiku) b = Object.assign({}, body, { thinking: { type: 'disabled' } }); // a translation needs no thinking step: quicker first word
+    if (extras && isOpus){ // if Claude's safety check declines a harmless translation, the API re-runs it on another model (Opus only)
+      b = Object.assign({}, body, { fallbacks: 'default' }); h = Object.assign({}, headers, { 'anthropic-beta': 'server-side-fallback-2026-07-01' });
+    }
     var ctl = new AbortController(), timer = setTimeout(function(){ ctl.abort(); }, 45000);
     try{ return await fetch(TYPE_URL, { method: 'POST', headers: h, body: JSON.stringify(b), signal: ctl.signal }); }
     finally{ clearTimeout(timer); }
   }
-  var useFallback = model === TYPE_MODEL, r, data = null;
-  try{ r = await call(useFallback); }catch(e){ throw new Error(unreachable); }
+  var useExtras = isHaiku || isOpus, r, data = null;
+  try{ r = await call(useExtras); }catch(e){ throw new Error(unreachable); }
   try{ data = await r.json(); }catch(e){ data = null; }
-  if (!r.ok && r.status === 400 && useFallback && /fallback/i.test(JSON.stringify(data || {}))){ // this account does not take the fallback: go without it
+  if (!r.ok && r.status === 400 && useExtras && /fallback|thinking/i.test(JSON.stringify(data || {}))){ // the account or model does not take those options: go without them
     try{ r = await call(false); }catch(e){ throw new Error(unreachable); }
     try{ data = await r.json(); }catch(e){ data = null; }
   }
   if (!r.ok) throw new Error(typeErrorText(r.status, data));
   if (data && data.stop_reason === 'refusal') throw new Error('Claude declined to translate this text.');
-  var out = ((data && data.content) || []).filter(function(b){ return b.type === 'text'; }).map(function(b){ return b.text; }).join('').replace(/<\/?text>/g, '').trim();
+  var out = ((data && data.content) || []).filter(function(b){ return b.type === 'text'; }).map(function(b){ return b.text; }).join('')
+    .replace(/<thinking>[\s\S]*?<\/thinking>/g, '').replace(/<\/?text>/g, '').trim();
   if (!out) throw new Error('Claude sent back no translation. Try again.');
   return out;
 }
