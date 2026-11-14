@@ -209,6 +209,7 @@ dialog.sheet{margin:auto auto calc(10px + var(--sab)); width:min(560px,calc(100%
 .group input[type=checkbox]:checked{background:var(--accent)}
 .group input[type=checkbox]:checked::after{transform:translateX(20px)}
 .group input[type=checkbox]:disabled{opacity:.45}
+.group > .hint{padding:8px 16px 10px; border-bottom:0}
 .group .pad{padding:10px 14px; display:flex; flex-direction:column; gap:6px}
 .group .pad > label{font-size:14px; color:var(--muted)}
 .group .pad select{background-color:var(--panel); width:100%}
@@ -421,6 +422,8 @@ a{color:var(--accent)}
       <label for="micSel">Microphone</label>
       <select id="micSel"><option value="">Default microphone</option></select>
     </div>
+    <label class="chk" id="micfxRow"><input type="checkbox" id="micfxOn"> <span>Clean up mic sound</span></label>
+    <div class="hint">Off sends the microphone's raw sound, the way Soniox's own web tools do. Turn it on if you hear echo or play translations through the speaker. It changes the next time you tap Start.</div>
   </div>
 
   <div class="gtitle">Tools</div>
@@ -463,7 +466,7 @@ a{color:var(--accent)}
     <div class="field">
       <label for="hintsInput">Extra language hints (optional)</label>
       <input type="text" id="hintsInput" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="for example: de">
-      <div class="hint">The two languages you picked are always included. Add other language codes, separated by commas, only if a third language is also spoken.</div>
+      <div class="hint">The language being spoken is always included (both languages in Both ways). Add other language codes, separated by commas, only if a third language is also spoken. More than one hint can make recognition less sure.</div>
     </div>
   </details>
   <details class="adv" id="typeAdv">
@@ -545,21 +548,43 @@ var el = {
   startLabel: $('startLabel'), textBtn: $('textBtn'), textPop: $('textPop'), fsRange: $('fsRange'),
   toast: $('toast'), toastMsg: $('toastMsg'), toastUndo: $('toastUndo'),
   nameA: $('nameA'), nameB: $('nameB'), enBadge: $('enBadge'), ukBadge: $('ukBadge'), enRole: $('enRole'), ukRole: $('ukRole'),
-  typeAdv: $('typeAdv')
+  typeAdv: $('typeAdv'), micfxOn: $('micfxOn')
 };
 
 /* ---------- audio downsampler (also runs inside the AudioWorklet) ---------- */
+// Brings the microphone's rate (usually 48 or 44.1 kHz) down to the 16 kHz Soniox wants. It first removes everything above about 7.4 kHz with a
+// windowed-sinc low-pass filter. The first version only averaged neighbouring samples, which lets hiss and noise above 8 kHz fold back into the
+// speech band (it cut a 10 kHz tone by only 6 dB), the worst thing to do to a recogniser in a noisy room. Everything it needs is inside the class,
+// because the class's source text is copied into the AudioWorklet.
 class Downsampler {
   constructor(inRate, outRate, chunk, cb){
     this.ratio = inRate / outRate; this.chunk = chunk; this.cb = cb;
-    this.buf = new Int16Array(chunk); this.i = 0; this.sum = 0; this.n = 0; this.phase = 0; this.peak = 0;
+    this.buf = new Int16Array(chunk); this.i = 0; this.peak = 0;
+    var half = Math.max(8, Math.round(16 * this.ratio)), os = 64, n = 2 * half * os + 1;   // half-width in input samples; table steps per input sample
+    var fc = 0.46 * outRate / inRate, beta = 6.5;                                          // cut-off in cycles per input sample; Kaiser window shape
+    var bessel = function(v){ var s = 1, t = 1; for (var q = 1; q < 40; q++){ t *= (v / (2 * q)) * (v / (2 * q)); s += t; } return s; };
+    var den = bessel(beta);
+    this.kern = new Float32Array(n);
+    for (var j = 0; j < n; j++){
+      var d = (j - half * os) / os, r = d / half;
+      var s = d === 0 ? 2 * fc : Math.sin(2 * Math.PI * fc * d) / (Math.PI * d);
+      this.kern[j] = s * bessel(beta * Math.sqrt(Math.max(0, 1 - r * r))) / den;
+    }
+    this.half = half; this.os = os;
+    this.cap = 16384; this.ring = new Float32Array(this.cap); this.w = 0; this.pos = 0;     // recent input, how much has arrived, where the next output sits
   }
   push(x){
+    var ring = this.ring, mask = this.cap - 1, half = this.half, os = this.os, kern = this.kern;
     for (var k = 0; k < x.length; k++){
-      this.sum += x[k]; this.n++; this.phase += 1;
-      if (this.phase >= this.ratio){
-        this.phase -= this.ratio;
-        var v = this.sum / this.n; this.sum = 0; this.n = 0;
+      ring[this.w & mask] = x[k]; this.w++;
+      while (this.pos + half < this.w){   // every input sample this output needs has arrived
+        var c = this.pos, s = 0, ws = 0;
+        for (var j = Math.ceil(c - half), j1 = Math.floor(c + half); j <= j1; j++){
+          var g = kern[Math.round((j - c + half) * os)];
+          s += g * ring[j & mask]; ws += g;
+        }
+        this.pos += this.ratio;
+        var v = ws ? s / ws : 0;           // dividing by the weights keeps the volume exact wherever the position falls
         if (v > 1) v = 1; else if (v < -1) v = -1;
         var a = v < 0 ? -v : v; if (a > this.peak) this.peak = a;
         this.buf[this.i++] = v < 0 ? v * 32768 : v * 32767;
@@ -601,7 +626,7 @@ function rebuildModes(){
 function modeSource(){ return S.mode === 'ba' ? 'en' : 'uk'; }
 function modeTarget(){ return S.mode === 'ba' ? 'uk' : 'en'; }
 var S = {
-  mode:'ab', langA:DEFAULT_LANG_A, langB:DEFAULT_LANG_B, ignore: store.get('ignore', '') === '1', untagged:0, warnedIgnore:false, lock: store.get('lock', '') === '1',
+  mode:'ab', langA:DEFAULT_LANG_A, langB:DEFAULT_LANG_B, ignore: store.get('ignore', '') === '1', untagged:0, warnedIgnore:false, lock: store.get('lock', '') === '1', micfx: store.get('micfx', '') === '1',
   running:false, demo:false, stopping:false, fatal:false,
   ws:null, ready:false, queue:[], reconnects:0, everOpened:false, triedLegacy:false,
   authMode: store.get('authMode', 'protocol'),
@@ -848,7 +873,11 @@ async function startAudio(){
   ctx.onstatechange = function(){
     if (S.running && S.ctx === ctx && (ctx.state === 'suspended' || ctx.state === 'interrupted')){ try{ ctx.resume(); }catch(e){} }
   };
-  var c = { audio:{ channelCount:1, echoCancellation:true, noiseSuppression:true, autoGainControl:true } };
+  // The microphone's raw sound, as Soniox's own web library asks for it (its defaults turn all three off): the browser's call-style clean-up
+  // (noise suppression, echo cancellation, automatic volume) can chop up words and muffle them, which hurts a recogniser more than room noise does.
+  // "Clean up mic sound" in More turns it back on, for example when using the speaker with spoken translation.
+  var fx = !!S.micfx;
+  var c = { audio:{ channelCount:1, echoCancellation:fx, noiseSuppression:fx, autoGainControl:fx } };
   if (el.mic.value) c.audio.deviceId = { exact: el.mic.value };
   var stream;
   try{ stream = await navigator.mediaDevices.getUserMedia(c); }
@@ -917,8 +946,10 @@ function persistKey(){
   updateForget();
 }
 function getHints(){
-  // the two chosen languages are always hints; extra codes typed in Settings follow them
-  var h = [S.langA, S.langB];
+  // Soniox: one language hint is the most robust, several can make it unsure which language it hears (worst in noise). So in a one-way direction
+  // only the language being SPOKEN is a hint (Ukrainian in Ukrainian to English, English in English to Ukrainian). Both ways needs both, and so does
+  // Ignore (it has to recognise the other language to drop it). Extra codes typed in Settings follow.
+  var h = (!ignoreActive() && S.mode === 'ab') ? [S.langA] : ((!ignoreActive() && S.mode === 'ba') ? [S.langB] : [S.langA, S.langB]);
   (el.hints.value || '').split(',').forEach(function(s){ s = s.trim().toLowerCase(); if (s && h.indexOf(s) < 0) h.push(s); });
   return h;
 }
@@ -1782,6 +1813,10 @@ el.typeBar.addEventListener('submit', async function(e){
   try{ el.typeText.focus(); }catch(e2){}
 });
 try{ if (window.visualViewport){ window.visualViewport.addEventListener('resize', fitTyping); window.visualViewport.addEventListener('scroll', fitTyping); } }catch(e){}
+el.micfxOn.addEventListener('change', function(){
+  S.micfx = el.micfxOn.checked; store.set('micfx', S.micfx ? '1' : '0');
+  if (S.running && !S.demo) showToast('Mic clean-up changes the next time you tap Start.');
+});
 el.ignoreOn.addEventListener('change', function(){
   S.ignore = el.ignoreOn.checked; store.set('ignore', S.ignore ? '1' : '0');
   changed(); // while Live, the stream is reopened so the new setting applies
@@ -1893,6 +1928,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.addEventListener)
   var th = store.get('theme', ''); if (th) root.dataset.theme = th;
   if (store.get('flip', '') === '1') setFlip(true);
   el.lockOn.checked = S.lock; syncQuick(); applyLock();
+  el.micfxOn.checked = S.micfx;
   var fs = parseInt(store.get('fs', ''), 10); if (fs) setFont(fs);
   if (navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) document.body.classList.add('standalone');
   var la = store.get('langA', DEFAULT_LANG_A), lb = store.get('langB', DEFAULT_LANG_B);
