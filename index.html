@@ -52,20 +52,20 @@ body[data-state="live"]::after{box-shadow:inset 0 0 0 3px var(--ok)}
 body[data-state="connecting"]::after{box-shadow:inset 0 0 0 3px var(--warn)}
 body[data-state="error"]::after{box-shadow:inset 0 0 0 3px var(--bad)}
 body.clean::after{display:none}
-header{display:flex; align-items:center; gap:10px; min-height:32px}
-.pill{display:inline-flex; align-items:center; gap:8px; height:30px; padding:0 12px 0 11px; border-radius:15px; background:var(--panel); border:1px solid var(--line); font-size:14px; color:var(--muted)}
-#dot{width:10px; height:10px; border-radius:50%; background:#9a9aa1; display:inline-block; flex:none}
+/* one quiet line under the language bar: state dot, status, timer, who is being heard, cost, and (while idle) what the direction does */
+#statusrow{display:flex; align-items:center; gap:8px; min-height:20px; padding:0 8px; font-size:13px; color:var(--muted); white-space:nowrap; overflow:hidden}
+#dot{width:9px; height:9px; border-radius:50%; background:#9a9aa1; display:inline-block; flex:none}
 #dot.connecting{background:var(--warn)}
 #dot.live{background:var(--ok); animation:pulse 1.8s infinite}
 #dot.error{background:var(--bad)}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(21,128,61,.45)}70%{box-shadow:0 0 0 7px rgba(21,128,61,0)}100%{box-shadow:0 0 0 0 rgba(21,128,61,0)}}
-#statusText{color:var(--ink); font-weight:600}
+#statusText{color:var(--ink); font-weight:650}
 #timer{font-variant-numeric:tabular-nums}
-body[data-state="idle"] #timer{display:none}
-#hearing{height:30px; display:inline-flex; align-items:center; padding:0 11px; border-radius:15px; background:var(--accent-soft); color:var(--accent); font-size:13px; font-weight:600; white-space:nowrap}
+#hearing{display:inline-flex; align-items:center; padding:1px 9px; border-radius:11px; background:var(--accent-soft); color:var(--accent); font-size:12px; font-weight:600; white-space:nowrap}
 #hearing[hidden]{display:none}
-.grow{flex:1}
-#cost{font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums}
+#cost{margin-left:auto; font-variant-numeric:tabular-nums}
+body[data-state="idle"] #timer, body[data-state="idle"] #cost{display:none}
+body:not([data-state="idle"]) #modeHint{display:none}
 button, select{
   font:inherit; font-size:16px; color:var(--btn-ink); background:var(--btn);
   border:0; border-radius:14px; padding:10px 14px; min-height:46px; cursor:pointer;
@@ -142,24 +142,28 @@ body.swap #enText{font-size:var(--fs-uk); line-height:1.35; font-weight:400; col
 .dir button{width:35px; height:44px; min-height:44px; padding:0; border-radius:11px; background:transparent; color:var(--muted); display:inline-flex; align-items:center; justify-content:center}
 .dir button[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink); box-shadow:0 1px 3px rgba(0,0,0,.25)}
 @media (hover:hover){ .dir button[aria-pressed="false"]:hover:not(:disabled){background-color:var(--fill2)} .dir button[aria-pressed="true"]:hover:not(:disabled){background-color:var(--accent)} }
-#modeHint{font-size:13px; color:var(--muted); text-align:center; line-height:1.3; padding:0 8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+#modeHint{flex:1 1 0; min-width:0; overflow:hidden; text-overflow:ellipsis}
 /* dock: one big Start button, then a quiet row of tools */
-#dock{position:relative; display:flex; flex-direction:column; gap:4px; padding:0 0 calc(8px + var(--sab))}
-#startBtn{position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; gap:10px; min-height:58px; border-radius:18px; font-size:19px; letter-spacing:.01em}
+#dock{position:relative; display:flex; flex-direction:column; gap:0; padding:0 0 calc(max(var(--sab) - 14px, 0px) + 6px)} /* sits just above the home bar instead of leaving a band of empty screen */
+.dockrow{display:flex; gap:4px; align-items:stretch}
+#startBtn{flex:1 1 auto; min-width:108px; display:flex; align-items:center; justify-content:center; gap:9px; min-height:58px; padding:0 10px; border-radius:18px; font-size:19px; letter-spacing:.01em}
 #startBtn svg{flex:none}
 #startBtn .i-stop{display:none}
 #startBtn.danger .i-stop{display:block}
 #startBtn.danger .i-mic{display:none}
-#meter{position:absolute; left:0; right:0; bottom:0; height:4px; background:transparent; display:block}
-#startBtn.danger #meter{background:rgba(255,255,255,.22)}
-#meter i{display:block; height:100%; width:0; background:rgba(255,255,255,.95); transition:width .08s}
-.tools{display:grid; grid-template-columns:repeat(5,1fr); gap:2px}
-.tool{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-height:52px; padding:6px 2px; border-radius:14px; background:transparent; color:var(--muted); font-size:11.5px; font-weight:600; position:relative}
+/* the microphone level: a thin bar across the whole width, in the gap just above the buttons, so it takes no room of its own */
+#meter{position:absolute; left:2px; right:2px; top:-7px; height:5px; border-radius:3px; background:transparent; overflow:hidden; pointer-events:none}
+body[data-state="live"] #meter, body[data-state="connecting"] #meter{background:var(--fill2)}
+#meter i{display:block; height:100%; width:0; background:var(--ok); border-radius:3px; transition:width .08s}
+
+.tool{flex:0 0 44px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-height:58px; padding:0; border-radius:14px; background:transparent; color:var(--muted); font-size:11.5px; font-weight:600; position:relative}
+@media (max-width:599px){ .tool > span:not(.aa){display:none} }
+@media (min-width:600px){ .tool{flex-basis:72px} }
 .tool svg{display:block}
 .tool .aa{font-size:19px; font-weight:700; line-height:22px; height:22px; color:var(--ink)}
 .tool:active:not(:disabled){background:var(--fill)}
 .tool[aria-expanded="true"]{background:var(--fill); color:var(--ink)}
-#flipQuick .padlock{position:absolute; right:calc(50% - 20px); top:8px; width:13px; height:13px; display:none}
+#flipQuick .padlock{position:absolute; right:7px; bottom:12px; width:13px; height:13px; display:none}
 #flipQuick.locked .padlock{display:block}
 #flipQuick.on{color:var(--accent)}
 .pop{position:absolute; left:0; right:0; bottom:calc(100% + 8px); background:var(--panel); border:1px solid var(--line); border-radius:20px; padding:12px; box-shadow:var(--shadow); z-index:6; display:flex; flex-direction:column; gap:10px}
@@ -168,14 +172,14 @@ body.swap #enText{font-size:var(--fs-uk); line-height:1.35; font-weight:400; col
 .fsrow button{min-width:52px; min-height:46px; padding:0 8px; font-weight:700; border-radius:14px}
 .fsrow input[type=range]{flex:1; min-width:0; height:44px; accent-color:var(--accent)}
 .pop .wide{width:100%; text-align:center; font-weight:600}
-#toast{position:absolute; left:0; right:0; bottom:calc(8px + var(--sab)); min-height:52px; background:var(--ink); color:var(--bg); border-radius:16px; padding:6px 6px 6px 16px; display:flex; align-items:center; gap:10px; box-shadow:var(--shadow); z-index:7; font-size:15px}
+#toast{position:absolute; left:0; right:0; bottom:calc(max(var(--sab) - 14px, 0px) + 6px); min-height:58px; background:var(--ink); color:var(--bg); border-radius:16px; padding:6px 6px 6px 16px; display:flex; align-items:center; gap:10px; box-shadow:var(--shadow); z-index:7; font-size:15px}
 #toast[hidden]{display:none}
 #toast span{flex:1; min-width:0}
 #toast button{background:var(--accent); color:var(--accent-ink); min-height:40px; padding:0 16px; border-radius:12px; font-weight:700; flex:none}
 footer{display:none; font-size:12px; color:var(--muted); padding-bottom:6px}
 @media (min-width:900px){ footer{display:block} }
 @media (min-width:700px){ #langwrap, #dock{width:100%; max-width:720px; align-self:center} }
-body.clean header, body.clean #dock, body.clean footer, body.clean #langwrap{display:none}
+body.clean #dock, body.clean footer, body.clean #langwrap{display:none}
 body.clean{padding-bottom:calc(8px + var(--sab))}
 #cleanBar{position:fixed; top:calc(10px + var(--sat)); right:calc(14px + var(--sar)); display:flex; gap:8px; z-index:5}
 #unclean, #cleanStart{display:none; min-height:44px; opacity:.8; box-shadow:0 1px 8px rgba(0,0,0,.18); background:var(--panel); border:1px solid var(--line)}
@@ -245,8 +249,8 @@ details.adv > summary::after{content:'\203A'; margin-left:auto; font-size:22px; 
 details.adv[open] > summary::after{transform:rotate(90deg)}
 details.adv .field input[type=text], details.adv .field input[type=password], details.adv .field textarea{background:var(--panel)}
 /* Home Screen app on a newer iPhone: iOS fades whatever sits right under the status bar, so start lower */
-body.standalone{padding-top:calc(30px + var(--sat))}
-@media (display-mode: standalone){ body{padding-top:calc(30px + var(--sat))} }
+body.standalone{padding-top:calc(14px + var(--sat))}
+@media (display-mode: standalone){ body{padding-top:calc(14px + var(--sat))} }
 /* Upside down: the whole page turns 180 degrees so the phone can be held with its bottom edge (and bottom microphone) toward the speaker.
    The notch and home-indicator margins swap sides, and the sheets open at the edge nearest your thumb. */
 html.flip{--sat:env(safe-area-inset-bottom); --sab:env(safe-area-inset-top); --sal:env(safe-area-inset-right); --sar:env(safe-area-inset-left)}
@@ -302,14 +306,6 @@ a{color:var(--accent)}
 </head>
 <body data-state="idle">
 
-<header>
-  <div class="pill"><span id="dot" class="idle"></span><span id="statusText" role="status" aria-live="polite">Idle</span><span id="timer">00:00:00</span></div>
-  <span id="hearing" hidden></span>
-  <span class="grow"></span>
-  <span id="cost"></span>
-  <span id="modeTitle" hidden>Ukrainian to English</span>
-</header>
-
 <div id="banner" hidden role="alert"><span id="bannerText"></span><div class="bbtns"><button id="bannerAction" hidden></button><button id="bannerClose" aria-label="Dismiss">Dismiss</button></div></div>
 
 <form id="typeBar" hidden autocomplete="off">
@@ -350,14 +346,15 @@ a{color:var(--accent)}
     </div>
     <label class="chip" id="chipB"><span class="cn" id="nameB">English</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><select id="langB" aria-label="Language 2"></select></label>
   </div>
-  <div id="modeHint"></div>
+  <div id="statusrow"><span id="dot" class="idle"></span><span id="statusText" role="status" aria-live="polite">Idle</span><span id="timer">00:00:00</span><span id="hearing" hidden></span><span id="modeHint"></span><span id="cost"></span><span id="modeTitle" hidden>Ukrainian to English</span></div>
 </section>
 
 <footer>Machine translation can be wrong. Treat it as an aid, not an official translation. While Live, microphone audio is sent over the internet to Soniox.</footer>
 
 <nav id="dock" aria-label="Controls">
-  <button id="startBtn" class="primary"><svg class="i-mic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><svg class="i-stop" viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="3"/></svg><span id="startLabel">Start</span><span id="meter" title="Microphone level"><i></i></span></button>
-  <div class="tools">
+  <div id="meter" title="Microphone level"><i></i></div>
+  <div class="dockrow">
+  <button id="startBtn" class="primary"><svg class="i-mic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><svg class="i-stop" viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="3"/></svg><span id="startLabel">Start</span></button>
     <button id="textBtn" class="tool" aria-haspopup="true" aria-expanded="false" aria-label="Text size and layout"><span class="aa" aria-hidden="true">Aa</span><span>Text</span></button>
     <button id="clearBtn" class="tool" aria-label="Clear the screen" title="Clear the screen"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg><span>Clear</span></button>
     <button id="cleanBtn" class="tool" title="Hide the controls for projecting"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/></svg><span>Clean</span></button>
@@ -654,7 +651,7 @@ function showBanner(msg, kind, tip, action){
 }
 function hideBanner(){ el.banner.hidden = true; el.bannerAction.hidden = true; el.bannerFn = null; delete el.banner.dataset.tip; }
 function ui(){
-  var label = S.demo ? 'Stop demo' : ((S.running) ? 'Stop' : 'Start');
+  var label = (S.running || S.demo) ? 'Stop' : 'Start'; // the status line says DEMO, so the button stays short
   el.startLabel.textContent = label;
   el.start.classList.toggle('danger', S.running);
   el.cleanStart.textContent = label; // the same Start or Stop, kept reachable inside Clean view
